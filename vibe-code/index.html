@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vibe Code - Projects Gallery</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dark-mode">
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">ML</div>
+            <div class="nav-items">
+                <a href="../index.html">Home</a>
+                <a href="index.html" class="active">Vibe Code</a>
+                <a href="../consultancy/index.html">Consultancy</a>
+            </div>
+            <button id="theme-toggle" aria-label="Toggle dark mode">
+                🌙
+            </button>
+        </div>
+    </nav>
+
+    <main class="container" id="main-content">
+        <div class="search-container">
+            <div class="search-row">
+                <input type="text" id="search-input" placeholder="Search projects..." class="search-input">
+                <select id="category-filter" class="filter-select">
+                    <option value="all">All Categories</option>
+                    <option value="games">Games</option>
+                    <option value="simulations">Simulations</option>
+                </select>
+                <select id="sort-options" class="filter-select">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="az">A-Z</option>
+                    <option value="za">Z-A</option>
+                </select>
+                <button id="apply-filters" class="filter-button">Apply</button>
+            </div>
+            <div class="filter-tags" id="active-filters">
+                <!-- Active filters will be added here by JS -->
+            </div>
+        </div>
+
+        <div class="projects-container" id="projects-container">
+            <!-- Projects will be loaded here by JS -->
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2023 - Data Engineer & Developer Portfolio</p>
+        </div>
+    </footer>
+
+    <script src="../js/darkmode.js"></script>
+    <script src="../js/projects.js"></script>
+</body>
+</html>

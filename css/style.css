@@ -1,0 +1,471 @@
+/* Base Styles */
+:root {
+    --font-primary: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --transition: all 0.3s ease;
+    
+    /* Light Mode */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f5f5;
+    --text-primary: #333333;
+    --text-secondary: #666666;
+    --accent: #3498db;
+    --border: #dddddd;
+    --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --navbar-bg: #222;
+    --navbar-text: #fff;
+}
+
+.dark-mode {
+    --bg-primary: #121212;
+    --bg-secondary: #1f1f1f;
+    --text-primary: #e0e0e0;
+    --text-secondary: #aaaaaa;
+    --accent: #64b5f6;
+    --border: #333333;
+    --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --navbar-bg: #0a0a0a;
+    --navbar-text: #fff;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-primary);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    transition: var(--transition);
+}
+
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Navigation */
+.navbar {
+    background-color: var(--navbar-bg);
+    color: var(--navbar-text);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+}
+
+.logo {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.nav-items {
+    display: flex;
+    gap: 20px;
+}
+
+.nav-items a {
+    color: var(--navbar-text);
+    text-decoration: none;
+    font-weight: 500;
+    transition: var(--transition);
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+
+.nav-items a:hover, .nav-items a.active {
+    color: var(--accent);
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+#theme-toggle {
+    background: transparent;
+    border: none;
+    color: var(--navbar-text);
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 8px;
+}
+
+/* Project title container for centering */
+.project-title-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+/* Project title in nav bar */
+.project-title {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: #ffffff; /* Always white regardless of theme */
+    padding: 0 15px;
+    text-align: center;
+}
+
+/* Back button in nav bar */
+.nav-back-button {
+    background: none;
+    border: none;
+    color: #ffffff; /* Always white regardless of theme */
+    font-size: 0.9em;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background-color 0.2s;
+    justify-self: start; /* Align to the left */
+}
+
+.nav-back-button:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.interactive-mode .navbar {
+    background-color: rgba(10, 10, 10, 0.9);
+}
+
+.interactive-mode .navbar .container {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.interactive-mode #theme-toggle {
+    color: #ffffff; /* Always white in interactive mode */
+}
+
+/* Hero Section */
+.hero {
+    background-color: var(--bg-secondary);
+    padding: 80px 0;
+    text-align: center;
+}
+
+.hero h1 {
+    font-size: 3rem;
+    margin-bottom: 20px;
+}
+
+.hero p {
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+    color: var(--text-secondary);
+}
+
+.cta-button {
+    display: inline-block;
+    background-color: var(--accent);
+    color: white;
+    padding: 12px 24px;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.cta-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Card Styles */
+.card {
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+    transition: var(--transition);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.card-image {
+    height: 180px;
+    overflow: hidden;
+}
+
+.card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: var(--transition);
+}
+
+.card:hover .card-image img {
+    transform: scale(1.05);
+}
+
+.card-content {
+    padding: 20px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-title {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+}
+
+.card-description {
+    color: var(--text-secondary);
+    margin-bottom: 15px;
+    flex-grow: 1;
+}
+
+.card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: auto;
+}
+
+.tag {
+    background-color: rgba(52, 152, 219, 0.1);
+    color: var(--accent);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+/* Section Styles */
+.section {
+    padding: 50px 0;
+}
+
+.section-title {
+    font-size: 2rem;
+    margin-bottom: 30px;
+    position: relative;
+    display: inline-block;
+}
+
+.section-title::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 0;
+    width: 50px;
+    height: 3px;
+    background-color: var(--accent);
+}
+
+/* Footer */
+footer {
+    background-color: var(--navbar-bg);
+    color: var(--navbar-text);
+    padding: 30px 0;
+    text-align: center;
+    margin-top: 50px;
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+    .navbar .container {
+        flex-direction: column;
+        padding: 10px;
+    }
+    
+    .nav-items {
+        margin-top: 15px;
+    }
+    
+    .hero h1 {
+        font-size: 2.5rem;
+    }
+}
+
+/* Grid Layout */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 30px;
+    margin: 30px 0;
+}
+
+/* Category Headers */
+.category-header {
+    grid-column: 1 / -1;
+    margin-top: 40px;
+    margin-bottom: 20px;
+    font-size: 1.8rem;
+    color: var(--text-primary);
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 10px;
+}
+
+.category-header:first-of-type {
+    margin-top: 0;
+}
+
+/* Search and Filter */
+.search-container {
+    background-color: var(--bg-secondary);
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    box-shadow: var(--card-shadow);
+}
+
+.search-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.search-input {
+    flex-grow: 1;
+    padding: 10px 15px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.filter-select {
+    padding: 10px 15px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.filter-button {
+    padding: 10px 15px;
+    background-color: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.filter-button:hover {
+    background-color: #2980b9;
+}
+
+.filter-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.filter-tag {
+    background-color: var(--accent);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.9rem;
+}
+
+.filter-tag .remove {
+    cursor: pointer;
+}
+
+/* Game container styles */
+#game-container {
+    width: 100%;
+    height: calc(100vh - 200px);
+    position: relative;
+    margin: 0 auto;
+    background-color: var(--bg-secondary);
+    overflow: hidden;
+    border-radius: 8px;
+}
+
+#ping-pong-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+}
+
+/* Make project containers fill available space */
+.projects-container {
+    min-height: calc(100vh - 60px); /* Match with navbar height */
+}
+
+/* Add responsive margin to the main container */
+main.container {
+    margin-top: 30px;
+    margin-bottom: 50px;
+}
+
+/* Add these classes to your existing CSS file */
+
+.interactive-container {
+    position: relative;
+    transition: box-shadow 0.3s;
+}
+
+.interactive-container:focus-within {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.5);
+}
+
+/* Make main content area take up more space when viewing interactive content */
+#main-content.interactive-mode {
+    max-width: 100%;
+    padding: 0; /* Remove padding to maximize space */
+    margin: 0; /* Remove margin to maximize space */
+}
+
+/* Hide scrollbars when interactive content is active */
+body.interactive-mode {
+    overflow: hidden;
+}
+
+/* Adjust main container margins for interactive content */
+main.container.interactive-mode {
+    margin-top: 0;
+    margin-bottom: 0;
+    width: 100%;
+    max-width: 100%;
+}
+
+/* Floating controls for interactive content */
+.interactive-overlay-control {
+    position: absolute;
+    z-index: 10;
+    background-color: rgba(0,0,0,0.5);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 12px;
+    transition: opacity 0.3s;
+    opacity: 0.7;
+}
+
+.interactive-overlay-control:hover {
+    opacity: 1;
+}

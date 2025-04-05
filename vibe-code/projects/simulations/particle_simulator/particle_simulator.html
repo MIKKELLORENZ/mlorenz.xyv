@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Particle Simulator</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: #111;
+      color: #fff;
+      font-family: Arial, sans-serif;
+    }
+    #canvas {
+      display: block;
+    }
+    #ui {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 10;
+    }
+    .button {
+      padding: 10px;
+      margin: 5px;
+      background-color: #222;
+      border: 1px solid #444;
+      cursor: pointer;
+      color: #fff;
+      display: inline-block;
+    }
+    .button:hover {
+      background-color: #333;
+    }
+    .control-panel {
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 10px;
+      margin-top: 5px;
+      position: absolute;
+      z-index: 20;
+      left: 10px;
+      top: 60px; /* Position under the menu buttons */
+      border: 1px solid #444;
+    }
+    .slider {
+      width: 100px;
+    }
+    .color-picker {
+      width: 50px;
+      height: 20px;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <div id="ui">
+    <div class="button" id="addLaserButton">Add Laser</div>
+    <div class="button" id="addPrismButton">Add Prism</div>
+    <div class="button" id="addSlitButton">Add Slit Wall</div>
+    <div class="button" id="addWallButton">Add Wall</div>
+    <div class="button" id="addMirrorButton">Add Mirror</div>
+    <div class="button" id="addPolarizerButton">Add Polarizer</div>
+    <div class="button" id="addEntanglerButton">Add Entangler</div>
+    <div class="button" id="addNegativeCoilButton">Add Negative Coil</div>
+    <div class="button" id="addPositiveCoilButton">Add Positive Coil</div>
+    <div class="button" id="toggleFadeButton">Toggle Fade</div>
+    <div class="button" id="clearHitsButton">Clear Wall Hits</div>
+    <div class="button" id="clearSimulationButton">Clear Simulation</div>
+    <div class="button" id="deleteObjectButton">Delete Object</div>
+    <div class="button" id="pauseResumeButton">Pause</div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
