@@ -6,6 +6,12 @@
     <title>Retro Moon Lander Game</title>
     <link rel="stylesheet" href="moon_lander.css">
     <style>
+        /* Add canvas background with deep blue gradient */
+        canvas {
+            display: block;
+            background: radial-gradient(circle at top, #000022, #000000);
+        }
+        
         /* Mobile touch controls styling */
         #touchControls {
             display: none; /* Hidden by default, shown on mobile */
@@ -851,29 +857,29 @@
                     let adjustedThrust = thrust * (1 + (1900 - fuel) / 1900);
                     lander.vx += adjustedThrust * Math.sin(lander.angle) * deltaTimeSec;
                     lander.vy -= adjustedThrust * Math.cos(lander.angle) * deltaTimeSec;
-                    fuel -= 0.48;
+                    fuel -= 0.49;
 
                     emitDustParticles(deltaTimeSec);
                 }
                 if (keys['arrowleft']) {
                     lander.angularVelocity -= 90 * Math.PI / 180 * deltaTimeSec;
-                    fuel -= 0.13;
+                    fuel -= 0.14;
                 }
                 if (keys['arrowright']) {
                     lander.angularVelocity += 90 * Math.PI / 180 * deltaTimeSec;
-                    fuel -= 0.13;
+                    fuel -= 0.14;
                 }
                 if (keys['d']) {
                     let thrust = 27;
                     lander.vx += thrust * Math.sin(lander.angle - Math.PI / 2) * deltaTimeSec;
                     lander.vy -= thrust * Math.cos(lander.angle - Math.PI / 2) * deltaTimeSec;
-                    fuel -= 0.13;
+                    fuel -= 0.14;
                 }
                 if (keys['a']) {
                     let thrust = 27;
                     lander.vx += thrust * Math.sin(lander.angle + Math.PI / 2) * deltaTimeSec;
                     lander.vy -= thrust * Math.cos(lander.angle + Math.PI / 2) * deltaTimeSec;
-                    fuel -= 0.13;
+                    fuel -= 0.14;
                 }
             }
 
