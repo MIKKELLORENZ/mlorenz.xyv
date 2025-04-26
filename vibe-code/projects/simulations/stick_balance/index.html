@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stick Balance Simulation</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="simulation-container">
+            <canvas id="simulationCanvas"></canvas>
+            <div class="wind-indicator">
+                <h3>Wind</h3>
+                <div id="windArrow"></div>
+            </div>
+        </div>
+        
+        <div class="charts-container">
+            <div class="chart-section">
+                <h3>Episode Rewards</h3>
+                <div class="chart-wrapper">
+                    <canvas id="rewardsChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-section">
+                <h3>Episode Duration</h3>
+                <div class="chart-wrapper">
+                    <canvas id="durationChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-section">
+                <h3>Weight Change</h3>
+                <div class="chart-wrapper">
+                    <canvas id="weightChangeChart"></canvas>
+                </div>
+            </div>
+            <div class="stats">
+                <div>
+                    <span>Episode:</span>
+                    <span id="episodeCounter">0</span>
+                </div>
+                <div>
+                    <span>Best Duration:</span>
+                    <span id="bestDuration">0</span>
+                </div>
+                <div>
+                    <span>Last Reward:</span>
+                    <span id="lastReward">0</span>
+                </div>
+                <div>
+                    <span>Weight Change:</span>
+                    <span id="weightChange">0</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls-container">
+            <h3>Training Parameters</h3>
+            <div class="parameter">
+                <label for="learningRate">Learning Rate:</label>
+                <input type="range" id="learningRate" min="0.001" max="0.5" step="0.001" value="0.1">
+                <span id="learningRateValue">0.1</span>
+            </div>
+            <div class="parameter">
+                <label for="discountFactor">Discount Factor:</label>
+                <input type="range" id="discountFactor" min="0.8" max="0.99" step="0.01" value="0.95">
+                <span id="discountFactorValue">0.95</span>
+            </div>
+            <div class="parameter">
+                <label for="explorationRate">Initial Exploration Rate:</label>
+                <input type="range" id="explorationRate" min="0.1" max="1" step="0.05" value="1">
+                <span id="explorationRateValue">1</span>
+            </div>
+            <div class="parameter">
+                <label for="minExplorationRate">Minimum Exploration Rate:</label>
+                <input type="range" id="minExplorationRate" min="0.01" max="0.2" step="0.01" value="0.01">
+                <span id="minExplorationRateValue">0.01</span>
+            </div>
+            <div class="parameter">
+                <label for="explorationDecay">Exploration Decay Rate:</label>
+                <input type="range" id="explorationDecay" min="0.001" max="0.1" step="0.001" value="0.01">
+                <span id="explorationDecayValue">0.01</span>
+            </div>
+            <div class="parameter">
+                <label for="windStrength">Max Wind Strength:</label>
+                <input type="range" id="windStrength" min="0" max="20" step="1" value="5">
+                <span id="windStrengthValue">5</span>
+            </div>
+            <div class="parameter">
+                <label for="initialAngleVariation">Initial Angle Variation (±deg):</label>
+                <input type="range" id="initialAngleVariation" min="1" max="20" step="1" value="5">
+                <span id="initialAngleVariationValue">5</span>
+            </div>
+            <button id="startButton">Start Training</button>
+            <button id="resetButton" disabled>Reset</button>
+        </div>
+    </div>
+
+    <!-- Include Chart.js for statistics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Our simulation scripts -->
+    <script src="js/physics.js"></script>
+    <script src="js/agent.js"></script>
+    <script src="js/environment.js"></script>
+    <script src="js/renderer.js"></script>
+    <script src="js/simulation.js"></script>
+</body>
+</html>

@@ -1,0 +1,895 @@
+/**
+ * Main simulation controller that ties together the environment, agent, and renderer
+ */
+document.addEventListener('DOMContentLoaded', () => {
+    // Get DOM elements
+    const canvas = document.getElementById('simulationCanvas');
+    const startButton = document.getElementById('startButton');
+    const resetButton = document.getElementById('resetButton');
+    
+    // Parameter sliders and display values
+    const learningRateSlider = document.getElementById('learningRate');
+    const learningRateValue = document.getElementById('learningRateValue');
+    const discountFactorSlider = document.getElementById('discountFactor');
+    const discountFactorValue = document.getElementById('discountFactorValue');
+    const explorationRateSlider = document.getElementById('explorationRate');
+    const explorationRateValue = document.getElementById('explorationRateValue');
+    const minExplorationRateSlider = document.getElementById('minExplorationRate');
+    const minExplorationRateValue = document.getElementById('minExplorationRateValue');
+    const explorationDecaySlider = document.getElementById('explorationDecay');
+    const explorationDecayValue = document.getElementById('explorationDecayValue');
+    const windStrengthSlider = document.getElementById('windStrength');
+    const windStrengthValue = document.getElementById('windStrengthValue');
+    const initialAngleVariationSlider = document.getElementById('initialAngleVariation');
+    const initialAngleVariationValue = document.getElementById('initialAngleVariationValue');
+    
+    // Stats elements
+    const episodeCounter = document.getElementById('episodeCounter');
+    const bestDuration = document.getElementById('bestDuration');
+    const lastReward = document.getElementById('lastReward');
+    const weightChange = document.getElementById('weightChange');
+    
+    // Chart contexts
+    const rewardsChartCtx = document.getElementById('rewardsChart').getContext('2d');
+    const durationChartCtx = document.getElementById('durationChart').getContext('2d');
+    const weightChangeChartCtx = document.getElementById('weightChangeChart').getContext('2d');
+    
+    // Initialize charts
+    const rewardsChart = new Chart(rewardsChartCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Episode Reward',
+                data: [],
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.1,
+                borderWidth: 1,
+                pointRadius: 3,
+                pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+                pointBorderColor: 'rgba(75, 192, 192, 1)',
+                pointHoverRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: false
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            animation: false,
+            elements: {
+                point: {
+                    radius: 2, // Small enough to not crowd the chart
+                    hitRadius: 10, // Larger area for hover interaction
+                    hoverRadius: 4
+                }
+            }
+        }
+    });
+    
+    const durationChart = new Chart(durationChartCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Episode Duration',
+                data: [],
+                borderColor: 'rgba(255, 99, 132, 1)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                tension: 0.1,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            animation: false
+        }
+    });
+    
+    // New weight change chart
+    const weightChangeChart = new Chart(weightChangeChartCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Weight Change',
+                data: [],
+                borderColor: 'rgba(54, 162, 235, 1)',
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                tension: 0.1,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Euclidean Distance'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            animation: false
+        }
+    });
+    
+    // Update slider values display
+    function updateSliderDisplays() {
+        learningRateValue.textContent = learningRateSlider.value;
+        discountFactorValue.textContent = discountFactorSlider.value;
+        explorationRateValue.textContent = explorationRateSlider.value;
+        minExplorationRateValue.textContent = minExplorationRateSlider.value;
+        explorationDecayValue.textContent = explorationDecaySlider.value;
+        windStrengthValue.textContent = windStrengthSlider.value;
+        initialAngleVariationValue.textContent = initialAngleVariationSlider.value;
+    }
+    
+    // Add event listeners to sliders
+    learningRateSlider.addEventListener('input', updateSliderDisplays);
+    discountFactorSlider.addEventListener('input', updateSliderDisplays);
+    explorationRateSlider.addEventListener('input', updateSliderDisplays);
+    minExplorationRateSlider.addEventListener('input', updateSliderDisplays);
+    explorationDecaySlider.addEventListener('input', updateSliderDisplays);
+    windStrengthSlider.addEventListener('input', updateSliderDisplays);
+    initialAngleVariationSlider.addEventListener('input', updateSliderDisplays);
+    
+    // Initialize slider displays
+    updateSliderDisplays();
+
+    // Assets preloading status
+    let assetsLoaded = false;
+    let assetLoadingStarted = false;
+    
+    // Simulation class
+    class Simulation {
+        constructor() {
+            this.isRunning = false;
+            this.animationId = null;
+            this.updateInterval = 20; // milliseconds between physics updates
+            this.lastUpdateTime = 0;
+            
+            // Force learning flag to ensure weights are updated
+            this.forceLearn = true;
+            this.displayWeightUpdates = true;
+            this.forceUpdateFrequency = 5; // Update weights every 5 steps
+            
+            // Initialize environment just for renderer setup
+            const params = this.getParameters();
+            this.environment = new Environment(params);
+            this.renderer = new Renderer(canvas, this.environment);
+            
+            // Render static background scene immediately
+            this.renderBackgroundOnly();
+            
+            // Sound loading status
+            this.soundsLoaded = false;
+            
+            // Begin loading sounds
+            this.preloadAudio();
+
+            // New record notification
+            this.newRecordNotification = null;
+            this.bestDurationSoFar = 0;
+        }
+
+        // Get current parameter values
+        getParameters() {
+            return {
+                learningRate: parseFloat(learningRateSlider.value),
+                discountFactor: parseFloat(discountFactorSlider.value),
+                explorationRate: parseFloat(explorationRateSlider.value),
+                minExplorationRate: parseFloat(minExplorationRateSlider.value),
+                explorationDecay: parseFloat(explorationDecaySlider.value),
+                windStrength: parseFloat(windStrengthSlider.value),
+                initialAngleVariation: parseFloat(initialAngleVariationSlider.value)
+            };
+        }
+        
+        // Preload all audio assets
+        preloadAudio() {
+            if (assetLoadingStarted) return;
+            assetLoadingStarted = true;
+            
+            // Create audio context
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            this.audioContext = new AudioContext();
+            
+            // List of sounds to preload
+            const soundFiles = [
+                { name: 'bird', path: 'sounds/bird.mp3' },
+                { name: 'fallen', path: 'sounds/fallen.mp3' },
+                { name: 'gravel', path: 'sounds/gravel.mp3' },
+                { name: 'newRecord', path: 'sounds/new_record.mp3' }
+            ];
+            
+            this.sounds = {};
+            let loadedCount = 0;
+            
+            // Show loading status on the start button
+            startButton.disabled = true;
+            startButton.textContent = 'Loading assets...';
+            
+            // Load each sound
+            soundFiles.forEach(sound => {
+                const audio = new Audio();
+                audio.addEventListener('canplaythrough', () => {
+                    loadedCount++;
+                    if (loadedCount === soundFiles.length) {
+                        this.setupAudio();
+                        this.soundsLoaded = true;
+                        assetsLoaded = true;
+                        startButton.disabled = false;
+                        startButton.textContent = 'Start Training';
+                        
+                        // Position start button in middle of canvas
+                        this.positionStartButton();
+                    }
+                }, { once: true });
+                
+                audio.addEventListener('error', () => {
+                    console.error(`Error loading sound: ${sound.path}`);
+                    loadedCount++;
+                });
+                
+                audio.src = sound.path;
+                audio.load();
+                this.sounds[sound.name] = audio;
+            });
+        }
+        
+        // Setup audio system with preloaded sounds
+        setupAudio() {
+            // Setup oscillator for electric car sound
+            this.oscillator = this.audioContext.createOscillator();
+            this.oscillator.type = 'sine';
+            this.oscillator.frequency.value = 60;
+            this.oscillator.volume = 0.1;
+            
+            this.filter = this.audioContext.createBiquadFilter();
+            this.filter.type = 'lowpass';
+            this.filter.frequency.value = 500;
+            this.filter.Q.value = 10;
+            
+            this.gainNode = this.audioContext.createGain();
+            this.gainNode.gain.value = 0;
+            
+            this.oscillator.connect(this.filter);
+            this.filter.connect(this.gainNode);
+            this.gainNode.connect(this.audioContext.destination);
+            
+            this.soundStarted = false;
+            
+            // Configure preloaded sounds
+            this.birdSound = this.sounds.bird;
+            this.birdSound.loop = true;
+            this.birdSound.volume = 1.0;
+            
+            // Create an array of fallen sound instances to allow overlapping
+            this.fallenSounds = [
+                this.sounds.fallen,
+                new Audio(this.sounds.fallen.src),
+                new Audio(this.sounds.fallen.src)
+            ];
+            // Set a lower volume for all fallen sound instances
+            this.fallenSounds.forEach(sound => {
+                sound.volume = 0.3; // Lower volume from default 1.0 to 0.3
+            });
+            this.currentFallenSoundIndex = 0;
+            
+            this.newRecordSound = this.sounds.newRecord;
+            this.newRecordSound.volume = 0.2; // Start silent
+            
+            this.gravelSound = this.sounds.gravel;
+            this.gravelSound.loop = true;
+            this.gravelSound.volume = 1.0; // Start silent
+            this.gravelSound.playbackRate = 1.1; // Base pitch 10% higher
+            
+            // Don't try to play the sound yet - wait for user interaction
+            this.gravelSoundStarted = false;
+        }
+        
+        // Position start button in the middle of the canvas
+        positionStartButton() {
+            startButton.style.position = 'absolute';
+            startButton.style.zIndex = '100';
+            
+            // Get canvas position
+            const canvasRect = canvas.getBoundingClientRect();
+            
+            // Position button
+            startButton.style.left = `${canvasRect.left + canvasRect.width/2 - startButton.offsetWidth/2}px`;
+            startButton.style.top = `${canvasRect.top + canvasRect.height/2 - startButton.offsetHeight/2}px`;
+        }
+        
+        // Render just the background (sky, ground, etc.) without simulation elements
+        renderBackgroundOnly() {
+            if (this.renderer) {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw background elements only
+                this.renderer.drawBackground();
+                
+                // Draw clouds with minimal wind
+                this.renderer.drawClouds(0.5);
+                
+                // Draw wind streams with minimal wind (ensuring they're visible)
+                this.renderer.drawWindStreams(0.5);
+            }
+        }
+        
+        // Update electric car sound based on platform velocity
+        updateSound(velocity) {
+            if (!this.audioContext || !this.soundStarted) return;
+            
+            try {
+                // Get absolute velocity for sound intensity (with safety checks)
+                const absVelocity = Math.abs(velocity) || 0;
+                
+                // Cap velocity to prevent excessively large values
+                const cappedVelocity = Math.min(absVelocity, 20);
+                
+                // Map velocity to useful frequency range (90-800 Hz)
+                // The frequency increases with speed
+                const targetFrequency = 90 + cappedVelocity * 50; 
+                
+                // Safety check to ensure frequency is a valid number and within reasonable range
+                if (isFinite(targetFrequency) && targetFrequency > 0 && targetFrequency < 1000) {
+                    // Smooth transition to target frequency
+                    this.oscillator.frequency.setTargetAtTime(targetFrequency, this.audioContext.currentTime, 0.1);
+                }
+                
+                // Volume increases with velocity but keeps it subtle
+                // Significantly reduced volume overall (0.01 base, max 0.05)
+                const targetVolume = Math.min(0.01 + cappedVelocity * 0.002, 0.05);
+                
+                // Safety check for volume value
+                if (isFinite(targetVolume) && targetVolume >= 0 && targetVolume <= 1) {
+                    this.gainNode.gain.setTargetAtTime(targetVolume, this.audioContext.currentTime, 0.2);
+                }
+            } catch (error) {
+                // Gracefully handle any errors in sound processing
+                console.error("Error updating sound:", error);
+            }
+        }
+        
+        // Initialize simulation with current parameters
+        init() {
+            // Get parameter values
+            const params = this.getParameters();
+            
+            // Create environment
+            this.environment = new Environment(params);
+            
+            // Create agent
+            this.agent = new Agent(params);
+            
+            // Create renderer
+            this.renderer = new Renderer(canvas, this.environment);
+            
+            // Simulation properties
+            this.episodeSteps = 0;
+            this.totalSteps = 0;
+            this.currentState = this.environment.reset();
+        }
+        
+        // Start the simulation
+        start() {
+            if (this.isRunning || !assetsLoaded) return;
+            
+            // Hide start button
+            startButton.style.display = 'none';
+            
+            // Initialize components if not already done
+            this.init();
+            
+            // Start sound if not already started
+            if (!this.soundStarted && this.oscillator) {
+                this.oscillator.start();
+                this.soundStarted = true;
+            }
+            
+            // Mark as running
+            this.isRunning = true;
+            
+            // Start animation loop
+            this.lastUpdateTime = performance.now();
+            this.animationLoop();
+
+            // Start background bird sound
+            if (this.birdSound) {
+                this.birdSound.play();
+            }
+
+            // Start the gravel sound at volume 0
+            if (this.gravelSound && !this.gravelSoundStarted) {
+                this.gravelSound.volume = 0.8;
+                this.gravelSound.play().catch(err => console.error("Error playing gravel sound:", err));
+                this.gravelSoundStarted = true;
+            }
+        }
+        
+        // Stop the simulation
+        stop() {
+            this.isRunning = false;
+            
+            // Silence the sound but don't stop it
+            if (this.gainNode) {
+                this.gainNode.gain.setTargetAtTime(0, this.audioContext.currentTime, 0.1);
+            }
+            
+            if (this.animationId) {
+                cancelAnimationFrame(this.animationId);
+                this.animationId = null;
+            }
+
+            // Stop bird sound
+            if (this.birdSound) {
+                this.birdSound.pause();
+                this.birdSound.currentTime = 0;
+            }
+
+            // Stop gravel sound
+            if (this.gravelSound) {
+                this.gravelSound.pause();
+                this.gravelSound.currentTime = 0;
+            }
+
+            // Stop all fallen sounds
+            if (this.fallenSounds) {
+                this.fallenSounds.forEach(sound => {
+                    sound.pause();
+                    sound.currentTime = 0;
+                });
+            }
+        }
+        
+        // Reset the simulation
+        reset() {
+            this.stop();
+            
+            // Reset charts
+            rewardsChart.data.labels = [];
+            rewardsChart.data.datasets[0].data = [];
+            rewardsChart.update();
+            
+            durationChart.data.labels = [];
+            durationChart.data.datasets[0].data = [];
+            durationChart.update();
+            
+            weightChangeChart.data.labels = [];
+            weightChangeChart.data.datasets[0].data = [];
+            weightChangeChart.update();
+            
+            // Reset stats display
+            episodeCounter.textContent = '0';
+            bestDuration.textContent = '0';
+            lastReward.textContent = '0';
+            weightChange.textContent = '0';
+            
+            // Reset agent and environment
+            this.init();
+            
+            // Reset oscillator if needed
+            if (this.soundStarted) {
+                // Stop and recreate the oscillator properly
+                this.oscillator.stop();
+                
+                // Create new oscillator 
+                this.oscillator = this.audioContext.createOscillator();
+                this.oscillator.type = 'sine';
+                this.oscillator.frequency.value = 120;
+                
+                // Connect everything again
+                this.oscillator.connect(this.filter);
+                
+                this.soundStarted = false;
+            }
+            
+            // Show start button in the middle of canvas again
+            startButton.style.display = 'block';
+            this.positionStartButton();
+            
+            // Re-enable starting with new parameters
+            startButton.disabled = false;
+            resetButton.disabled = true;
+            
+            // Render just the background
+            this.renderBackgroundOnly();
+        }
+        
+        // Display a new record notification
+        showNewRecordNotification(duration) {
+            try {
+                // Remove existing notification if present
+                if (this.newRecordNotification && this.newRecordNotification.parentNode) {
+                    document.body.removeChild(this.newRecordNotification);
+                }
+                
+                // Create notification element
+                this.newRecordNotification = document.createElement('div');
+                this.newRecordNotification.classList.add('record-notification');
+                this.newRecordNotification.textContent = `New record: ${duration.toFixed(1)}s`;
+                
+                // Style the notification
+                Object.assign(this.newRecordNotification.style, {
+                    position: 'absolute',
+                    backgroundColor: 'rgba(76, 175, 80, 0.9)',
+                    color: 'white',
+                    padding: '8px 16px',
+                    borderRadius: '4px',
+                    fontWeight: 'bold',
+                    zIndex: '100',
+                    transition: 'opacity 0.5s ease-in-out',
+                    opacity: '0'
+                });
+                
+                // Add to document
+                document.body.appendChild(this.newRecordNotification);
+                
+                // Position near the platform - check that all required elements exist
+                if (this.renderer && this.currentState) {
+                    const canvasRect = canvas.getBoundingClientRect();
+                    const platformPos = this.renderer.worldToScreen(this.currentState.platformPos, 0);
+                    
+                    if (platformPos && this.newRecordNotification) {
+                        this.newRecordNotification.style.left = `${canvasRect.left + platformPos.x - this.newRecordNotification.offsetWidth / 2}px`;
+                        this.newRecordNotification.style.top = `${canvasRect.top + platformPos.y - 100}px`;
+                    }
+                }
+                
+                // Fade in
+                setTimeout(() => {
+                    if (this.newRecordNotification) {
+                        this.newRecordNotification.style.opacity = '1';
+                    }
+                }, 10);
+                
+                // Fade out and remove after a delay
+                setTimeout(() => {
+                    if (this.newRecordNotification) {
+                        this.newRecordNotification.style.opacity = '0';
+                        setTimeout(() => {
+                            if (this.newRecordNotification && this.newRecordNotification.parentNode) {
+                                document.body.removeChild(this.newRecordNotification);
+                                this.newRecordNotification = null;
+                            }
+                        }, 500); // Wait for fade out animation
+                    }
+                }, 3000); // Show for 3 seconds
+            } catch (error) {
+                console.error("Error showing record notification:", error);
+            }
+        }
+        
+        // Update charts with latest data
+        updateCharts() {
+            const stats = this.agent.getStats();
+            const timestep = this.environment.physics.timestep;
+            
+            // Update episode counter
+            episodeCounter.textContent = stats.episodeCount;
+            
+            // Convert from steps to seconds for more intuitive display
+            const bestDurationSeconds = stats.bestDuration * timestep;
+            // Update best duration (in seconds)
+            bestDuration.textContent = bestDurationSeconds.toFixed(1) + 's';
+            
+            // Check if new record was achieved
+            if (bestDurationSeconds > this.bestDurationSoFar) {
+                // Play new record sound
+                this.newRecordSound.play().catch(err => console.error("Error playing new record sound:", err));
+                
+                // Show notification
+                this.showNewRecordNotification(bestDurationSeconds);
+                
+                // Update recorded best duration
+                this.bestDurationSoFar = bestDurationSeconds;
+            }
+            
+            // Update last reward
+            lastReward.textContent = stats.lastReward.toFixed(1);
+            
+            // Update weight change
+            weightChange.textContent = stats.lastWeightChange.toFixed(4);
+            
+            // Update charts every episode (removed the previous condition)
+            
+            // Limit the number of data points to prevent excessive memory usage
+            const maxDataPoints = 100;
+            
+            // Update reward chart
+            const rewardData = [...stats.episodeRewards];
+            if (rewardData.length > maxDataPoints) {
+                // Only keep the most recent data points
+                rewardData.splice(0, rewardData.length - maxDataPoints);
+            }
+            
+            rewardsChart.data.labels = Array.from(
+                { length: rewardData.length }, 
+                (_, i) => (stats.episodeCount - rewardData.length + i + 1).toString()
+            );
+            rewardsChart.data.datasets[0].data = rewardData;
+            rewardsChart.update('none'); // Use 'none' mode for better performance
+            
+            // Update duration chart (convert steps to seconds)
+            const durationData = [...stats.episodeDurations].map(steps => steps * timestep);
+            if (durationData.length > maxDataPoints) {
+                // Only keep the most recent data points
+                durationData.splice(0, durationData.length - maxDataPoints);
+            }
+            
+            durationChart.data.labels = Array.from(
+                { length: durationData.length }, 
+                (_, i) => (stats.episodeCount - durationData.length + i + 1).toString()
+            );
+            durationChart.data.datasets[0].data = durationData;
+            durationChart.options.scales.y.title = {
+                display: true,
+                text: 'Duration (seconds)'
+            };
+            durationChart.update('none'); // Use 'none' mode for better performance
+            
+            // Update weight change chart
+            const weightChangeData = [...stats.weightChanges];
+            if (weightChangeData.length > maxDataPoints) {
+                // Only keep the most recent data points
+                weightChangeData.splice(0, weightChangeData.length - maxDataPoints);
+            }
+            
+            weightChangeChart.data.labels = Array.from(
+                { length: weightChangeData.length }, 
+                (_, i) => (stats.episodeCount - weightChangeData.length + i + 1).toString()
+            );
+            weightChangeChart.data.datasets[0].data = weightChangeData;
+            weightChangeChart.update('none'); // Use 'none' mode for better performance
+        }
+        
+        /**
+         * Main animation and learning loop
+         */
+        animationLoop() {
+            if (!this.isRunning) return;
+            
+            const now = performance.now();
+            const elapsed = now - this.lastUpdateTime;
+            
+            // Update physics at fixed time steps
+            if (elapsed >= this.updateInterval) {
+                this.lastUpdateTime = now;
+                
+                try {
+                    // Validate current state before proceeding
+                    if (!this.isStateValid(this.currentState)) {
+                        console.error("Invalid state detected. Resetting episode:", this.currentState);
+                        // Reset to a valid state
+                        this.currentState = this.environment.reset();
+                        this.episodeSteps = 0;
+                    }
+                    
+                    // Select action and step environment
+                    const action = this.agent.selectAction(this.currentState);
+                    
+                    // Log actions in early episodes to verify the agent is moving in both directions
+                    if (this.agent.episodeCount < 10 && this.episodeSteps % 10 === 0) {
+                        console.log(`Episode ${this.agent.episodeCount}, Step ${this.episodeSteps}: Action = ${action.toFixed(2)}`);
+                    }
+                    
+                    const result = this.environment.step(action);
+                    
+                    // Validate result state before continuing
+                    if (!this.isStateValid(result.state)) {
+                        console.error("Invalid result state detected. Resetting episode:", result.state);
+                        // Reset to a valid state
+                        this.currentState = this.environment.reset();
+                        this.episodeSteps = 0;
+                        
+                        // Skip the rest of this frame's processing
+                        this.renderer.render(this.currentState, 0); // Render with zero wind
+                        this.animationId = requestAnimationFrame(() => this.animationLoop());
+                        return;
+                    }
+                    
+                    // Log rewards for debugging
+                    if (this.agent.episodeCount < 5 && this.episodeSteps % 20 === 0) {
+                        console.log(`Reward: ${result.reward.toFixed(2)}, Done: ${result.done}, Wind: ${result.wind.toFixed(2)}`);
+                    }
+                    
+                    // Update electric car sound based on platform velocity
+                    this.updateSound(result.state.platformVel);
+                    
+                    // Dynamically adjust gravel sound based on velocity
+                    if (this.gravelSound && this.gravelSoundStarted) {
+                        try {
+                            // ...existing code...
+                            // Just update volume and playback state
+                            const absVelocity = Math.abs(result.state.platformVel) || 0;
+                            const cappedVelocity = Math.min(absVelocity, 20);
+                            this.gravelSound.volume = Math.min(cappedVelocity / 3, 1.0);
+                            if (absVelocity > 0.01) {
+                                if (this.gravelSound.paused) {
+                                    this.gravelSound.play().catch(err => {
+                                        console.error("Error playing gravel sound:", err);
+                                    });
+                                }
+                            } else if (!this.gravelSound.paused) {
+                                this.gravelSound.pause();
+                            }
+                        } catch (error) {
+                            console.error("Error updating gravel sound:", error);
+                        }
+                    }
+                    
+                    // Learn from the result
+                    this.agent.learn(this.currentState, action, result.reward, result.state, result.done);
+                    
+                    // Optimize forced learning to prevent slowdown
+                    // Only do forced learning if we're not seeing NaN issues
+                    if (this.forceLearn && (this.totalSteps % 3 === 0)) { // Increased frequency from 5 to 3
+                        // Use a single reused batch to prevent memory churn
+                        if (!this._cachedBatch || this.totalSteps % 25 === 0) { // More frequent batch updates (from 100 to 25)
+                            this._cachedBatch = this.agent.sampleBatch();
+                        }
+                        
+                        if (this._cachedBatch && this._cachedBatch.experiences && 
+                            this._cachedBatch.experiences.length > 0) {
+                            // Only do a single update per frame to maintain performance
+                            const loss = this.agent.trainOnBatch(this._cachedBatch);
+                            
+                            // More frequent weight change calculations (from 20 to 10)
+                            if (this.totalSteps % 10 === 0) {
+                                const weightChangeValue = this.agent.calculateWeightChange();
+                                this.agent.lastWeightChange = Math.max(0.0001, weightChangeValue);
+                                
+                                if (weightChange) {
+                                    weightChange.textContent = this.agent.lastWeightChange.toFixed(4);
+                                }
+                                
+                                // Add to history more frequently (from 50 to 20)
+                                if (this.totalSteps % 20 === 0) {
+                                    // Keep history size bounded
+                                    if (this.agent.weightChanges.length >= 200) {
+                                        this.agent.weightChanges.shift();
+                                    }
+                                    this.agent.weightChanges.push(this.agent.lastWeightChange);
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Update target network less frequently
+                    if (this.totalSteps % 100 === 0) {
+                        this.agent.updateTargetNetwork();
+                    }
+                    
+                    // Update current state
+                    this.currentState = result.state;
+                    
+                    // Count steps
+                    this.episodeSteps++;
+                    this.totalSteps++;
+                    
+                    // Render current state - limit framerate for performance
+                    // Only render every other frame when episode count is high
+                    const shouldRender = this.agent.episodeCount < 30 || this.totalSteps % 2 === 0;
+                    if (shouldRender) {
+                        this.renderer.render(this.currentState, result.wind);
+                    }
+                    
+                    // If episode is done
+                    if (result.done) {
+                        // Record episode statistics
+                        this.agent.endEpisode(this.episodeSteps, result.totalReward);
+                        
+                        // Decay exploration rate
+                        this.agent.decayExploration();
+                        
+                        // More efficient episode end handling
+                        // Only update charts every few episodes to reduce performance impact
+                        if (this.agent.episodeCount % 5 === 0 || this.agent.episodeCount < 20) {
+                            this.updateCharts();
+                        }
+                        
+                        // Log episode info less frequently as training progresses
+                        if (this.agent.episodeCount % 10 === 0 || this.agent.episodeCount < 30) {
+                            console.log(`Episode ${this.agent.episodeCount} completed. Duration: ${this.episodeSteps}, Reward: ${result.totalReward.toFixed(2)}`);
+                        }
+                        
+                        // Play fallen sound if needed
+                        if (this.environment.physics.hasStickFallen(this.currentState) && this.fallenSounds) {
+                            // Rotate through fallen sound instances to allow overlapping
+                            const fallenSound = this.fallenSounds[this.currentFallenSoundIndex];
+                            fallenSound.currentTime = 0;
+                            fallenSound.play().catch(err => console.error("Error playing fallen sound:", err));
+                            
+                            // Move to next sound instance
+                            this.currentFallenSoundIndex = (this.currentFallenSoundIndex + 1) % this.fallenSounds.length;
+                        }
+                        
+                        // Reset environment for next episode
+                        this.currentState = this.environment.reset();
+                        this.episodeSteps = 0;
+                        
+                        // Manage memory periodically to prevent memory leaks
+                        if (this.agent.episodeCount % 10 === 0) {
+                            this.agent.manageMemoryUsage();
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error in animation loop:", error);
+                    
+                    // If we encounter an error, reset the simulation state
+                    this.currentState = this.environment.reset();
+                    this.episodeSteps = 0;
+                }
+            }
+            
+            // Continue animation loop with optimal scheduling to prevent slowdowns
+            this.animationId = requestAnimationFrame(() => this.animationLoop());
+        }
+        
+        /**
+         * Check if a simulation state is valid
+         * @param {Object} state - The simulation state to validate
+         * @returns {boolean} - True if state is valid, false otherwise
+         */
+        isStateValid(state) {
+            // Check if state exists
+            if (!state) return false;
+            
+            // Check for NaN or Infinite values in physics state
+            return Object.values(state).every(isFinite);
+        }
+    }
+    
+    // Create simulation instance
+    const simulation = new Simulation();
+    
+    // Set up button event handlers
+    startButton.addEventListener('click', () => {
+        if (!assetsLoaded) return;
+        
+        resetButton.disabled = false;
+        simulation.start();
+    });
+    
+    resetButton.addEventListener('click', () => {
+        simulation.reset();
+    });
+    
+    // Handle window resize events to reposition the start button
+    window.addEventListener('resize', () => {
+        if (!simulation.isRunning) {
+            simulation.positionStartButton();
+            simulation.renderBackgroundOnly();
+        }
+    });
+});

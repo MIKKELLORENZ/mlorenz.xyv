@@ -527,8 +527,8 @@
         }
 
         // Game variables
-        let oxygen = 70;
-        let fuel = 1900;
+        let oxygen = 60;
+        let fuel = 1700;
         let score = 0;
         let gameOver = false;
 
@@ -757,6 +757,15 @@
             let deltaTimeSec = deltaTime / 1000;
 
             if (lander.crashed) {
+                // Inherit lander's momentum (only once)
+                for (let debris of lander.debrisParticles) {
+                    if (!debris.hasInheritedMomentum) {
+                        debris.vx += lander.vx*2;
+                        debris.vy += lander.vy*2;
+                        debris.hasInheritedMomentum = true;
+                    }
+                }
+
                 for (let particle of lander.explosionParticles) {
                     particle.x += particle.vx * deltaTimeSec;
                     particle.y += particle.vy * deltaTimeSec;
@@ -767,34 +776,22 @@
 
                 // Update debris particles
                 for (let debris of lander.debrisParticles) {
-                    // Update position based on velocity
                     debris.x += debris.vx * deltaTimeSec;
                     debris.y += debris.vy * deltaTimeSec;
-                    
-                    // Apply gravity
                     debris.vy += gravity * deltaTimeSec;
-                    
-                    // Update rotation
                     debris.angle += debris.angularVelocity * deltaTimeSec;
-                    
-                    // Check for collision with ground
+
                     const groundY = getTerrainHeightAt(debris.x);
                     if (debris.y + debris.height/2 >= groundY) {
-                        // Position correction - place on ground
                         debris.y = groundY - debris.height/2;
-                        
-                        // Bounce with energy loss
                         if (Math.abs(debris.vy) > 5) {
-                            debris.vy = -debris.vy * 0.4; // 60% energy loss on bounce
-                            debris.vx *= 0.7; // Friction with ground
-                            debris.angularVelocity *= 0.7; // Reduce spin
+                            debris.vy = -debris.vy * 0.4;
+                            debris.vx *= 0.7;
+                            debris.angularVelocity *= 0.7;
                         } else {
-                            // Come to rest
                             debris.vy = 0;
-                            debris.vx *= 0.95; // Friction when sliding
-                            debris.angularVelocity *= 0.95; // Reduce spin further
-                            
-                            // Stop completely at very low speeds
+                            debris.vx *= 0.95;
+                            debris.angularVelocity *= 0.95;
                             if (Math.abs(debris.vx) < 1) debris.vx = 0;
                             if (Math.abs(debris.angularVelocity) < 0.1) debris.angularVelocity = 0;
                         }
@@ -854,7 +851,7 @@
             if (!lander.controlsDisabled && fuel > 0) {
                 if (keys['arrowup']) {
                     let thrust = 65;
-                    let adjustedThrust = thrust * (1 + (1900 - fuel) / 1900);
+                    let adjustedThrust = thrust * (1 + (1700 - fuel) / 1700);
                     lander.vx += adjustedThrust * Math.sin(lander.angle) * deltaTimeSec;
                     lander.vy -= adjustedThrust * Math.cos(lander.angle) * deltaTimeSec;
                     fuel -= 0.49;
@@ -1337,6 +1334,26 @@
                 ctx.translate(lander.x, lander.y);
                 ctx.rotate(lander.angle);
 
+                // Display "Unconscious..." label when oxygen is depleted but player hasn't crashed yet
+                if (oxygen <= 0 && !lander.crashed) {
+                    // Save context before drawing text
+                    ctx.save();
+                    // Reset rotation so text is always upright
+                    ctx.rotate(-lander.angle);
+                    ctx.font = "bold 16px Arial";
+                    ctx.textAlign = "center";
+                    ctx.fillStyle = "rgba(220, 220, 220, 0.9)";
+                    // Add shadow for better visibility against various backgrounds
+                    ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
+                    ctx.shadowBlur = 4;
+                    ctx.shadowOffsetX = 1;
+                    ctx.shadowOffsetY = 1;
+                    // Position the text above the lander
+                    ctx.fillText("Unconscious...", 0, -45);
+                    // Restore context for lander drawing
+                    ctx.restore();
+                }
+
                 // Main body - more capsule shaped
                 ctx.fillStyle = '#E0E0E8';
                 ctx.beginPath();
@@ -1534,12 +1551,12 @@
             const groundY = getTerrainHeightAt(lander.x);
             const heightAboveTerrain = groundY - (lander.y + 20);
 
-            const fuelPercentage = Math.max(0, Math.min((fuel / 1900) * 100, 100));
+            const fuelPercentage = Math.max(0, Math.min((fuel / 1700) * 100, 100));
             document.getElementById('mini-fuel-value').textContent = Math.floor(fuelPercentage) + '%';
             const miniFuelBar = document.getElementById('mini-fuel-bar');
             miniFuelBar.style.width = fuelPercentage + '%';
 
-            const oxygenPercentage = Math.max(0, Math.min((oxygen / 70) * 100, 100));
+            const oxygenPercentage = Math.max(0, Math.min((oxygen / 60) * 100, 100));
             document.getElementById('mini-oxygen-value').textContent = Math.floor(oxygenPercentage) + '%';
             const miniOxygenBar = document.getElementById('mini-oxygen-bar');
             miniOxygenBar.style.width = oxygenPercentage + '%';
@@ -1786,10 +1803,10 @@
         function successfulLanding(platform) {
             if (!platform.landed) {
                 score += platform.points;
-                fuel += 340;
-                oxygen += 17.5;
-                fuel = Math.min(fuel, 1900);
-                oxygen = Math.min(oxygen, 70);
+                fuel += 330;
+                oxygen += 17;
+                fuel = Math.min(fuel, 1700);
+                oxygen = Math.min(oxygen, 60);
                 
                 // Optimize sound playback for minimal delay
                 try {
@@ -1897,8 +1914,8 @@
         }
 
         function restartGame() {
-            oxygen = 60;
-            fuel = 1900;
+            oxygen = 60;  // Set to 100% oxygen value
+            fuel = 1700;  // Set to 100% fuel value
             score = 0;
             gameOver = false;
             lander.crashed = false;
@@ -2130,6 +2147,13 @@
                     </div>
                 `;
             }
+            
+            // Add credentials at the bottom
+            controlsHTML += `
+                <div style="text-align: center; margin-top: 20px; font-size: 12px; color: #aaa;">
+                    Crafted by Mikkel Vind Lorenz, 2025
+                </div>
+            `;
             
             controlsGuide.innerHTML = controlsHTML;
             

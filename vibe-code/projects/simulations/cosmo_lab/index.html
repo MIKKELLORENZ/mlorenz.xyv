@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmo Lab</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Cosmo Lab</h1>
+    <div class="main-container">
+        <canvas id="simulationCanvas"></canvas>
+        <div id="controls">
+            <fieldset>
+                <legend>Genesis Parameters</legend>
+                <!-- Add Genesis Mode Dropdown -->
+                <div class="input-row">
+                    <label for="genesisModeSelect">Mode</label>
+                    <select id="genesisModeSelect">
+                        <option value="random" selected>Random</option>
+                        <option value="symmetric_clusters">Symmetric Clusters</option>
+                        <option value="spiral_galaxy">Spiral Galaxy</option>
+                        <option value="square_cluster">Square Cluster</option>
+                        <option value="approaching_clusters">Approaching Clusters</option>
+                        <option value="binary_star_system">Binary System</option> <!-- New -->
+                        <option value="empty_center_ring">Empty Center Ring</option> <!-- New -->
+                        <option value="orthogonal_streams">Orthogonal Streams</option> <!-- New -->
+                    </select>
+                </div>
+                <div class="input-row">
+                    <label for="numParticles">Particles</label>
+                    <input type="number" id="numParticles" name="numParticles" min="10" max="5000" value="1750"> <!-- Default updated -->
+                    <span id="numParticlesValue">1750</span> <!-- Default updated -->
+                </div>
+                <div class="input-row">
+                    <label for="seed">Seed</label>
+                    <input type="number" id="seed" name="seed" value="42">
+                </div>
+                <button id="createButton" class="primary">Create Universe</button>
+            </fieldset>
+            <fieldset>
+                <legend>Timeline Control</legend>
+                <div class="input-row">
+                    <button id="playPauseButton" class="primary">Play</button>
+                    <label for="simSpeed">Speed</label>
+                    <input type="range" id="simSpeed" name="simSpeed" min="0.1" max="5" step="0.1" value="1.0"> <!-- Default updated -->
+                    <span id="simSpeedValue">1.0x</span> <!-- Default updated -->
+                </div>
+                <div class="input-row">
+                    <span>Age: <span id="simAge">0</span> steps</span>
+                </div>
+                <div class="input-row">
+                    <label for="colorModeSelect">Color Mode</label>
+                    <select id="colorModeSelect">
+                        <option value="velocity">Velocity</option>
+                        <option value="kinetic">Kinetic Energy</option>
+                    </select>
+                </div>
+            </fieldset>
+            <!-- New Fieldset for Gravity -->
+            <fieldset>
+                 <legend>Physics</legend>
+                 <div class="input-row">
+                    <label for="gravity">Gravity</label>
+                    <input type="range" id="gravity" name="gravity" min="0" max="1" step="0.01" value="0.59">
+                    <span id="gravityValue">0.59</span>
+                </div>
+            </fieldset>
+        </div>
+    </div>
+
+    <!-- Ensure spatialGrid.js is loaded if it exists, otherwise remove -->
+    <!-- <script src="js/spatialGrid.js"></script> -->
+    <script src="js/simulation.js"></script>
+    <script src="js/renderer.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

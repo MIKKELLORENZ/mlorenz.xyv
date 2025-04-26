@@ -1,0 +1,221 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background: #181c24;
+    color: #e0e6f0;
+    font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+    box-sizing: border-box;
+    display: flex; /* Use flexbox for layout */
+    flex-direction: column; /* Stack h1 above main content */
+    align-items: center; /* Center h1 */
+    justify-content: center; /* Center main content vertically */
+}
+
+body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+h1 {
+    margin: 0;
+    padding: 15px 0; /* Adjust padding */
+    font-size: 1.8rem; /* Slightly smaller */
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 1px;
+    color: #7ecfff;
+    text-shadow: 0 1px 8px #000a;
+    z-index: 20;
+    position: relative;
+    width: 100%; /* Ensure h1 takes full width */
+    flex-shrink: 0; /* Prevent h1 from shrinking */
+    margin-bottom: 10px; /* Add some space below title */
+}
+
+/* Container for canvas and controls */
+.main-container {
+    display: flex;
+    flex-grow: 1; /* Allow container to fill remaining space */
+    width: 100%;
+    align-items: center; /* Center items vertically */
+    justify-content: space-between; /* Push items to edges */
+    gap: 0; /* Remove gap */
+    padding: 0; /* Remove padding */
+    box-sizing: border-box;
+    max-width: none; /* Remove max-width constraint */
+    margin: 0; /* Remove margin */
+    position: relative; /* Add position relative for absolute positioning of canvas */
+}
+
+#controls {
+    display: flex;
+    flex-direction: column; /* Stack fieldsets vertically */
+    gap: 20px; /* Space between fieldsets */
+    background: rgba(24,28,36,0.95);
+    border-radius: 18px;
+    box-shadow: 0 4px 20px #0008, 0 1px 4px #2226;
+    padding: 20px;
+    z-index: 10;
+    width: 300px; /* Fixed width for controls panel */
+    max-height: 80vh; /* Limit height */
+    overflow-y: auto; /* Allow scrolling if content overflows */
+    flex-shrink: 0; /* Prevent controls from shrinking */
+    order: 2; /* Place controls after canvas */
+    position: absolute; /* Position absolutely */
+    right: 20px; /* Place at the right edge with some margin */
+    top: 50%;
+    transform: translateY(-50%); /* Center vertically */
+}
+
+fieldset {
+    border: none;
+    border-radius: 12px;
+    padding: 15px; /* Adjust padding */
+    margin: 0;
+    background: rgba(30,36,48,0.95);
+    box-shadow: 0 1px 4px #0004;
+}
+
+legend {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #7ecfff;
+    letter-spacing: 0.5px;
+    padding: 0 6px;
+    margin-bottom: 15px; /* Increase spacing */
+}
+
+.input-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px; /* Use margin-bottom instead of top */
+    gap: 10px; /* Adjust gap */
+    flex-wrap: wrap; /* Allow wrapping within rows */
+}
+
+label {
+    min-width: 80px; /* Adjust width */
+    color: #b8c6e0;
+    font-size: 0.95rem; /* Adjust size */
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+input[type="range"] {
+    flex-grow: 1; /* Allow range to fill space */
+    min-width: 80px;
+    accent-color: #7ecfff;
+    background: transparent;
+}
+
+input[type="number"], select {
+    width: 70px; /* Adjust width */
+    background: #23293a;
+    border: 1px solid #3a425a;
+    border-radius: 6px;
+    color: #e0e6f0;
+    padding: 4px 8px; /* Adjust padding */
+    font-size: 0.95rem; /* Adjust size */
+    outline: none;
+    transition: border 0.2s;
+    box-sizing: border-box;
+}
+
+input[type="number"]:focus, select:focus {
+    border: 1.5px solid #7ecfff;
+}
+
+select {
+    width: auto; /* Allow select to size based on content */
+    flex-grow: 1;
+}
+
+
+button {
+    padding: 6px 15px; /* Adjust padding */
+    border-radius: 7px;
+    border: none;
+    font-size: 0.95rem; /* Adjust size */
+    font-weight: 600;
+    background: #23293a;
+    color: #7ecfff;
+    cursor: pointer;
+    box-shadow: 0 1px 4px #0002;
+    transition: background 0.2s, color 0.2s;
+    margin-top: 5px; /* Add margin */
+}
+
+button.primary {
+    background: linear-gradient(90deg, #3a8fff 0%, #7ecfff 100%);
+    color: #fff;
+    box-shadow: 0 2px 8px #3a8fff44;
+}
+
+button.primary:hover, button.primary:focus {
+    background: linear-gradient(90deg, #7ecfff 0%, #3a8fff 100%);
+    color: #fff;
+}
+
+#simulationCanvas {
+    /* Keep dimensions the same but center in the available space */
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%); /* Center both horizontally and vertically */
+    /* Adjust visual size to match 4:3 aspect ratio */
+    /* Maintain height and calculate width, or vice versa */
+    height: 85vh; /* Keep height */
+    width: calc(85vh * 4 / 3); /* Calculate width based on 4:3 ratio */
+    /* Adjust max dimensions accordingly */
+    max-width: 85vw; /* Ensure it doesn't exceed viewport width */
+    max-height: 85vh;
+    /* If width calculation makes it too wide, constrain by width instead */
+    /* Example: If 85vw is the constraint: */
+    /* width: 85vw; */
+    /* height: calc(85vw * 3 / 4); */
+    /* Choose whichever constraint (height or width) is more limiting */
+
+    /* ... rest of existing styles ... */
+    background-color: #000;
+    border: 1px solid #3a425a;
+    border-radius: 6px; /* Slightly rounded corners */
+    z-index: 1;
+    display: block;
+    order: 1; /* Place canvas before controls */
+    flex-shrink: 1; /* Allow canvas to shrink if needed */
+    box-shadow: 0 0 20px rgba(0,0,0,0.4) inset, 0 0 3px #7ecfff22;
+}
+
+/* Style for the pause button state */
+button#playPauseButton.paused {
+    background: linear-gradient(90deg, #ff5a5a 0%, #ff8a8a 100%);
+    color: #fff;
+    box-shadow: 0 2px 8px #ff5a5a44;
+}
+
+button#playPauseButton.paused:hover,
+button#playPauseButton.paused:focus {
+    background: linear-gradient(90deg, #ff8a8a 0%, #ff5a5a 100%);
+}
+
+
+span[id$="Value"] {
+    min-width: 36px;
+    font-weight: 600;
+    color: #7ecfff;
+    font-size: 1rem; /* Adjust size */
+    text-align: right;
+    display: inline-block;
+}
+
+/* Style for the select dropdown */
+select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%237ecfff' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 12px;
+    padding-right: 28px; /* Make space for arrow */
+}

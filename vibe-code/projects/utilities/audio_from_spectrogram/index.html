@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpectrAudio - Spectrogram to Audio Converter</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>SpectrAudio</h1>
+            <p class="subtitle">Transform Spectrograms into Sound</p>
+        </header>
+
+        <div class="workflow-row">
+            <!-- Left: Upload and settings -->
+            <div class="workflow-left">
+                <div class="step-container">
+                    <h2>1. Upload Spectrogram</h2>
+                    <div class="upload-area" id="upload-area">
+                        <input type="file" id="image-input" accept=".jpg,.jpeg,.png">
+                        <label for="image-input" class="upload-button">Choose Image</label>
+                        <p>Drop your spectrogram image here or click to browse</p>
+                    </div>
+                </div>
+                <div class="step-container always-visible-settings">
+                    <h2>Settings</h2>
+                    <div class="settings-container">
+                        <div class="setting">
+                            <label for="min-freq">Minimum Frequency (Hz):</label>
+                            <input type="number" id="min-freq" min="0" max="20000" value="0">
+                        </div>
+                        <div class="setting">
+                            <label for="max-freq">Maximum Frequency (Hz):</label>
+                            <input type="number" id="max-freq" min="0" max="20000" value="20000">
+                        </div>
+                        <div class="setting">
+                            <label for="duration">Duration (seconds):</label>
+                            <input type="number" id="duration" min="0.1" step="0.1" value="5">
+                        </div>
+                        <div class="setting">
+                            <label for="sample-rate">Sample Rate (Hz):</label>
+                            <input type="number" id="sample-rate" min="8000" max="48000" step="100" value="44100">
+                        </div>
+                        <div class="setting">
+                            <label for="reconstruction-method">Quality / Speed:</label>
+                            <select id="reconstruction-method" class="control-button" style="padding: 10px; width: 100%; background-color: var(--input-bg-color); color: var(--input-text-color); border: 1px solid var(--border-color);">
+                                <option value="high">High Quality (Slow)</option>
+                                <option value="balanced" selected>Balanced</option>
+                                <option value="fastest">Fastest (Noisy)</option>
+                            </select>
+                        </div>
+                        <button id="process-button" class="control-button primary">Generate Audio</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Right: Steps 2+3+4 -->
+            <div class="workflow-right">
+                <div class="step-container" id="step-crop" style="display: none;">
+                    <h2>2. Adjust Spectrogram <span class="zoom-hint">(scroll to zoom)</span></h2>
+                    <div class="image-editor">
+                        <div class="cropper-container">
+                            <img id="image-to-crop" src="">
+                        </div>
+                        <div class="controls">
+                            <button id="rotate-left" class="control-button">Rotate Left</button>
+                            <button id="rotate-right" class="control-button">Rotate Right</button>
+                            <button id="flip-horizontal" class="control-button">Flip Horizontal</button>
+                            <button id="flip-vertical" class="control-button">Flip Vertical</button>
+                            <button id="crop-confirm" class="control-button primary">Confirm Selection</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-container" id="step-result" style="display: none;">
+                    <h2>Result</h2>
+                    <div class="result-container">
+                        <div class="preview">
+                            <img id="spectrogram-preview" src="">
+                        </div>
+                        <div class="audio-player">
+                            <audio id="audio-player" controls></audio>
+                            <div class="processing-message" id="processing-message" style="display: none;">
+                                <div class="spinner"></div>
+                                <p>Processing audio using Griffin-Lim algorithm...</p>
+                            </div>
+                            <!-- Progress Bar -->
+                            <div class="progress-container" id="progress-container" style="display: none;">
+                                <div class="progress-bar-outer">
+                                    <div class="progress-bar-inner" id="progress-bar"></div>
+                                </div>
+                            </div>
+                            <button id="download-button" class="control-button primary" style="display: none;">Download Audio</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>SpectrAudio - Created on April 25, 2025</p>
+    </footer>
+
+    <script src="griffinlim.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

@@ -2,15 +2,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Sample projects data (this would typically come from a JSON file or API)
     const projects = [
         {
-            id: "particle_simulator",
-            title: "Particle Simulator",
+            id: "cosmo_lab",
+            title: "Cosmo Lab",
             description: "An interactive simulation of particle interactions and physics.",
-            thumbnail: "../vibe-code/projects/simulations/particle_simulator/thumbnail.jpg",
+            thumbnail: "../vibe-code/projects/simulations/cosmo_lab/thumbnail.jpg",
             category: "simulations",
-            tags: ["photons","physics","javascript"],
-            date: "2024-11-10",
-            path: "projects/simulations/particle_simulator/particle_simulator.html",
-            type: "iframe" // Explicitly set to load in iframe
+            tags: ["photons","physics","javascript","planets"],
+            date: "2025-04-26",
+            path: "projects/simulations/cosmo_lab/index.html",
+            type: "iframe" 
         },
         {
             id: "moon_lander",
