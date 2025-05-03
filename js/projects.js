@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
             path: "projects/simulations/cosmo_lab/index.html",
             type: "iframe" 
         },
-        
+
         {
             id: "moon_lander",
             title: "Moon Lander",
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
             thumbnail: "../vibe-code/projects/utilities/random_password_generator/thumbnail.jpg",
             category: "utilities",
             tags: ["security", "passwords", "javascript"],
-            date: "2024-05-03",
+            date: "2025-05-03",
             path: "projects/utilities/random_password_generator/index.html",
             type: "iframe" // Explicitly set to load in iframe
         },
