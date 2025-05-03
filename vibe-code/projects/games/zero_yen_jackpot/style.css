@@ -1,0 +1,315 @@
+:root {
+    --background-color: #0a0a1f;
+    --reel-background: #1a1a3a;
+    --text-color: #e0e0ff;
+    --neon-pink: #ff00ff;
+    --neon-blue: #00ffff;
+    --neon-green: #39ff14;
+    --border-color: var(--neon-blue);
+    --slot-height: 150px; /* Height of one visible symbol */
+    --symbol-size: 100px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    font-family: 'Courier New', Courier, monospace; /* Basic cyberpunk font */
+}
+
+#game-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    padding: 20px;
+}
+
+#slot-machine-area { /* Wrapper for machine and arm */
+    display: flex;
+    align-items: center; /* Align arm vertically with machine */
+    margin-bottom: 30px;
+}
+
+#slot-machine {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 3px solid var(--border-color);
+    background: linear-gradient(145deg, #111, #222);
+    box-shadow: 0 0 15px var(--neon-blue), inset 0 0 10px rgba(0, 255, 255, 0.5);
+    padding: 20px;
+    border-radius: 10px;
+    position: relative; /* For absolute positioning of symbols if needed */
+    overflow: hidden; /* Hide overflowing reel strips */
+}
+
+#slot-arm {
+    width: 30px;
+    height: 200px;
+    background-color: #555;
+    border: 2px solid #888;
+    border-radius: 5px 15px 15px 5px;
+    margin-left: 20px;
+    position: relative; /* Arm stays fixed */
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+}
+
+#arm-handle {
+    width: 50px;
+    height: 50px;
+    background-color: var(--neon-pink);
+    border-radius: 50%;
+    border: 3px solid #ff80ff;
+    position: absolute;
+    top: 10px;
+    left: -10px;
+    box-shadow: 0 0 10px var(--neon-pink);
+    cursor: grab; /* Show grab cursor only on handle */
+    transition: transform 0.2s ease-out; /* Handle animation */
+    z-index: 5; /* Ensure handle appears above arm */
+}
+
+#arm-handle:active, #arm-handle.dragging {
+    cursor: grabbing;
+    transform: translateY(100px); /* Increase to 100px for more range */
+}
+
+.reel {
+    width: 120px;
+    height: var(--slot-height);
+    background-color: var(--reel-background);
+    border: 1px solid var(--neon-pink);
+    margin: 0 10px;
+    overflow: hidden;
+    position: relative; /* Needed for strip positioning */
+    border-radius: 5px;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+}
+
+.reel-strip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    transition: top 0.1s linear; /* Smooth movement during spin */
+}
+
+.symbol {
+    height: var(--slot-height);
+    font-size: var(--symbol-size);
+    line-height: var(--slot-height);
+    text-align: center;
+    font-weight: bold;
+    color: var(--neon-green);
+    text-shadow: 0 0 5px var(--neon-green), 0 0 10px var(--neon-green);
+    display: flex; /* Add this */
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    /* Add more styling for individual symbols if needed */
+}
+
+/* Basic spinning animation - JS will control 'top' property */
+.reel.spinning .reel-strip {
+    /* JS will rapidly change the 'top' property */
+    transition: top 0.05s linear; /* Faster transition during spin */
+}
+
+#controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+#coin-slot-area {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+#coin {
+    width: 60px;
+    height: 60px;
+    background-color: #f0c40f; /* Gold-ish */
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 30px;
+    font-weight: bold;
+    color: #a07400;
+    cursor: grab;
+    border: 3px solid #a07400;
+    box-shadow: 0 0 10px #f0c40f;
+}
+
+#coin:active {
+    cursor: grabbing;
+}
+
+#coin-slot {
+    width: 150px;
+    height: 40px;
+    border: 2px dashed var(--neon-pink);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--neon-pink);
+    font-size: 14px;
+    border-radius: 5px;
+    text-transform: uppercase;
+}
+
+#coin-slot.over { /* Style when dragging over */
+    background-color: rgba(255, 0, 255, 0.2);
+    border-style: solid;
+}
+
+#status {
+    font-size: 18px;
+    color: var(--neon-blue);
+    text-shadow: 0 0 5px var(--neon-blue);
+    display: flex;
+    gap: 30px;
+}
+
+button {
+    padding: 10px 20px;
+    background-color: var(--reel-background);
+    color: var(--neon-pink);
+    border: 2px solid var(--neon-pink);
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 16px;
+    text-transform: uppercase;
+    transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+button:hover {
+    background-color: var(--neon-pink);
+    color: var(--background-color);
+    box-shadow: 0 0 15px var(--neon-pink);
+}
+
+/* Increase specificity for the hidden state */
+#message-overlay.hidden {
+    display: none;
+    pointer-events: none; /* Explicitly disable interactions when hidden */
+}
+
+/* Add specific rule for hidden paytable */
+#paytable.hidden {
+    display: none;
+    pointer-events: none;
+}
+
+/* Remove the original less specific .hidden rule if it still exists */
+/*
+.hidden {
+    display: none;
+    pointer-events: none;
+}
+*/
+
+#paytable {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(10, 10, 31, 0.95);
+    border: 2px solid var(--neon-blue);
+    padding: 30px;
+    border-radius: 10px;
+    z-index: 100; /* Ensure it's above other elements */
+    box-shadow: 0 0 20px var(--neon-blue);
+    max-width: 80%;
+    max-height: 80%;
+    overflow-y: auto;
+    pointer-events: auto; /* Ensure it's interactive when visible */
+}
+
+#paytable h2 {
+    color: var(--neon-pink);
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+#paytable pre {
+    color: var(--text-color);
+    font-family: inherit;
+    font-size: 14px;
+    white-space: pre-wrap; /* Allow wrapping */
+}
+
+#paytable-close {
+    display: block;
+    margin: 20px auto 0;
+}
+
+/* Increase specificity for the hidden state */
+#message-overlay.hidden {
+    display: none;
+    pointer-events: none; /* Explicitly disable interactions when hidden */
+}
+
+/* Remove the original less specific .hidden rule */
+/*
+.hidden {
+    display: none;
+    pointer-events: none;
+}
+*/
+
+/* Message Overlay */
+#message-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex; /* Use flex to center */
+    justify-content: center;
+    align-items: center;
+    z-index: 50;
+    pointer-events: auto;
+    /* transition: opacity 0.3s ease-in-out; /* REMOVE or comment out this line */
+    opacity: 1;
+}
+
+#message-text {
+    color: var(--neon-green);
+    font-size: 4em;
+    text-shadow: 0 0 10px var(--neon-green);
+    text-align: center;
+    padding: 20px;
+    background: rgba(10, 10, 31, 0.8);
+    border: 2px solid var(--neon-green);
+    border-radius: 10px;
+}
+
+/* Winning state indication */
+.reel.winning {
+    box-shadow: 0 0 15px 5px var(--neon-green), inset 0 0 10px rgba(57, 255, 20, 0.5);
+    border-color: var(--neon-green);
+}
+.symbol.winning {
+     color: yellow; /* Or another highlight color */
+     text-shadow: 0 0 10px yellow;
+}
+
+/* Near miss indication (subtle) */
+.reel.near-miss {
+     border-color: orange;
+     box-shadow: 0 0 10px 2px orange, inset 0 0 5px rgba(255, 165, 0, 0.5);
+}

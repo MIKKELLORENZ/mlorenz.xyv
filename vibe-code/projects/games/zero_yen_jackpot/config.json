@@ -1,0 +1,27 @@
+{
+  "symbols": [
+    {"id": "A", "display": "猫", "weight": 1, "pay": 2000},
+    {"id": "B", "display": "竜", "weight": 2, "pay": 600},
+    {"id": "C", "display": "侍", "weight": 3, "pay": 220},
+    {"id": "D", "display": "忍", "weight": 4, "pay": 90},
+    {"id": "E", "display": "桜", "weight": 5, "pay": 40},
+    {"id": "F", "display": "¥", "weight": 5, "pay": 20},
+    {"id": "G", "display": "7", "weight": 6, "pay": 10},
+    {"id": "H", "display": "BAR", "weight": 6, "pay": 5}
+  ],
+  "reelsCount": 3,
+  "virtualReelSize": 32,
+  "spinDuration": 2200,
+  "stopDelay": 150,
+  "nearMissWindow": 1,
+  "nearMissRateTarget": 0.30,
+  "initialTurns": 3,
+  "sounds": {
+      "coin": "sounds/coin_insert.wav",
+      "spin": "sounds/reel_spin.wav",
+      "stop": "sounds/reel_stop.wav",
+      "win": "sounds/win_jingle.wav",
+      "bigWin": "sounds/big_win.wav",
+      "lose": "sounds/lose_thud.wav"
+  }
+}

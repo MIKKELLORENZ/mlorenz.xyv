@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>零円 JACKPOT</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <div id="slot-machine-area"> <!-- Added wrapper for machine + arm -->
+            <div id="slot-machine">
+                <div class="reel" id="reel1">
+                    <div class="reel-strip"></div>
+                </div>
+                <div class="reel" id="reel2">
+                    <div class="reel-strip"></div>
+                </div>
+                <div class="reel" id="reel3">
+                    <div class="reel-strip"></div>
+                </div>
+            </div>
+            <div id="slot-arm">
+                <div id="arm-handle" draggable="true"></div> <!-- Make only the handle draggable -->
+            </div>
+        </div>
+
+        <div id="controls">
+            <div id="coin-slot-area">
+                 <div id="coin" draggable="true">¥</div>
+                 <div id="coin-slot">INSERT COIN</div>
+            </div>
+            <div id="status">
+                <span>TURNS: <span id="turns-left">0</span></span>
+                <span>CREDITS: <span id="credits">0</span></span>
+            </div>
+             <button id="paytable-toggle">PAYTABLE</button>
+        </div>
+
+         <div id="paytable" class="hidden">
+            <h2>PAYTABLE (3-in-a-row)</h2>
+            <pre id="paytable-content"></pre>
+            <button id="paytable-close">CLOSE</button>
+        </div>
+
+        <div id="message-overlay" class="hidden">
+            <span id="message-text"></span>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
