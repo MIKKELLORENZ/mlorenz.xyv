@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cola Flavor Optimizer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f5f7fa;
+            --card-bg-color: #ffffff;
+            --text-color: #333;
+            --header-bg-color: #2c3e50; /* Darker than accent for contrast */
+            --accent-color: #375a7f;
+            --accent-text-color: #ffffff;
+            --border-radius: 8px;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --font-family: 'Poppins', sans-serif;
+            --danger-color: #e74c3c;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        .app-header {
+            background-color: var(--header-bg-color);
+            color: var(--accent-text-color);
+            padding: 20px;
+            text-align: center;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .app-header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 700;
+        }
+
+        .app-header p {
+            margin: 5px 0 0;
+            font-size: 1em;
+            font-weight: 400;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+            padding: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background-color: var(--card-bg-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 20px;
+        }
+
+        .card h2 {
+            margin-top: 0;
+            color: var(--accent-color);
+            font-weight: 600;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .dataset-card {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .table-container {
+            max-height: 420px;
+            overflow-y: auto;
+            margin-bottom: 20px; /* Space before sticky controls */
+            flex-grow: 1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
+        }
+
+        th {
+            background-color: #f9f9f9;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        td[contenteditable="true"] {
+            background-color: #f0f8ff1f;
+            cursor: cell;
+        }
+        td[contenteditable="true"]:focus {
+            outline: 2px solid var(--accent-color);
+            background-color: #e6f0ff;
+        }
+
+        .actions-cell button {
+            background: none;
+            border: none;
+            color: var(--danger-color);
+            font-size: 1.2em;
+            cursor: pointer;
+            padding: 5px;
+        }
+        .actions-cell button:hover {
+            opacity: 0.7;
+        }
+
+        .optimization-controls {
+            background-color: var(--card-bg-color); /* Match card background */
+            padding: 15px;
+            border-top: 1px solid #eee; /* Separator */
+            position: sticky;
+            bottom: 0; /* Stick to bottom of .dataset-card or its scrollport */
+            z-index: 10;
+        }
+        
+        .optimization-controls .buttons-group {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-family: var(--font-family);
+            font-weight: 600;
+            transition: background-color 0.2s ease;
+        }
+
+        .button-primary {
+            background-color: var(--accent-color);
+            color: var(--accent-text-color);
+        }
+        .button-primary:hover {
+            background-color: #2c4766; /* Darker accent */
+        }
+        .button-primary:disabled {
+            background-color: #a0a0a0;
+            cursor: not-allowed;
+        }
+
+        .button-secondary {
+            background-color: #e0e0e0;
+            color: var(--text-color);
+        }
+        .button-secondary:hover {
+            background-color: #d0d0d0;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 250px; /* Adjust as needed */
+        }
+        
+        .suggested-row {
+            background-color: #fffacd; /* LemonChiffon */
+        }
+        .suggested-row td[data-col-name="Rating"] {
+            font-style: italic;
+            color: #777;
+        }
+
+        .toast-notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--accent-color);
+            color: var(--accent-text-color);
+            padding: 12px 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out, bottom 0.5s ease-in-out;
+            font-size: 0.9em;
+        }
+        .toast-notification.show {
+            opacity: 1;
+            bottom: 30px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 1200px) {
+            .charts-grid {
+                grid-template-columns: 1fr; /* Stack charts vertically */
+            }
+            .chart-container {
+                height: 280px; 
+            }
+        }
+        @media (max-width: 700px) { /* collapse under 700px per spec */
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            .app-header h1 {
+                font-size: 2em;
+            }
+            .app-header p {
+                font-size: 0.9em;
+            }
+            .charts-grid { /* Keep 1 column for charts on mobile */
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Tooltip styling */
+        th[title] {
+            position: relative;
+            cursor: help;
+        }
+    </style>
+</head>
+<body>
+    <header class="app-header">
+        <h1>Cola Flavor Optimizer</h1>
+        <p>Bayesian Optimization for the Perfect Cola Recipe</p>
+    </header>
+
+    <main class="main-content">
+        <div class="card dataset-card">
+            <h2>Current Dataset</h2>
+            <div class="table-container">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th title="Amount of brown sugar in grams (g)">Brown Sugar (g)</th>
+                            <th title="Amount of lime juice in deciliters (dl)">Lime (dl)</th>
+                            <th title="Amount of nutmeg in grams (g)">Megnut (g)</th>
+                            <th title="Amount of cinnamon in grams (g)">Cinnamon (g)</th>
+                            <th title="User rating (1-10)">Rating</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataTableBody">
+                        <!-- Rows will be inserted here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="optimization-controls">
+                 <div class="buttons-group">
+                    <button id="getSuggestionButton" class="button-primary" aria-label="Get a new recipe suggestion based on current data">Get Suggestion</button>
+                    <button id="addRowButton" class="button-secondary" aria-label="Add a blank data row">+ Add Row</button>
+                    <button id="resetButton" class="button-secondary" aria-label="Reset all data and reload the application">Reset</button>
+                 </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Parameter Uncertainty</h2>
+            <div class="charts-grid">
+                <div class="chart-container"><canvas id="chartBrownSugar"></canvas></div>
+                <div class="chart-container"><canvas id="chartLime"></canvas></div>
+                <div class="chart-container"><canvas id="chartMegnut"></canvas></div>
+                <div class="chart-container"><canvas id="chartCinnamon"></canvas></div>
+            </div>
+        </div>
+    </main>
+
+    <div id="toastNotification" class="toast-notification"></div>
+
+    <script type="module">
+    import { Matrix, solve } from 'https://unpkg.com/ml-matrix?module';
+    import { Chart, registerables } from 'https://unpkg.com/chart.js?module';
+    // register all built-in controllers, elements, scales, and plugins
+    Chart.register(...registerables);
+
+    // resolve CSS vars for use in JS
+    const accentColor = getComputedStyle(document.documentElement)
+                           .getPropertyValue('--accent-color').trim();
+    const dangerColor = getComputedStyle(document.documentElement)
+                           .getPropertyValue('--danger-color').trim();
+
+        // --- CONSTANTS ---
+        const initialData = [
+          [140, 0.5, 2,   1,   4.6],
+          [130, 0.5, 1,   0.3, 6.3],
+          [150, 0.3, 1.5, 3,   7.1],
+          [110, 0.4, 2,   2,   9],
+          [105, 0.45,2.2, 1.8, 8.7],
+          [120, 0.35,2.1, 2.2, 8.5],
+          [100, 0.5, 2.5, 1.5, 7.9],
+          [180, 0.2, 1,   1,   3.2],
+          [160, 0.6, 1.2, 0.7, 4],
+          [125, 0.7, 1.8, 1.3, 5.8],
+          [115, 0.3, 2.3, 2.5, 8.2],
+          [170, 0.8, 0.8, 0.6, 2.9],
+          [145, 0.25,1.7, 2.7, 6.7]
+        ];
+
+        const PARAMETERS = [
+            { name: 'Brown Sugar', key: 'brownSugar', unit: 'g', bounds: [90, 180], chartId: 'chartBrownSugar' },
+            { name: 'Lime', key: 'lime', unit: 'dl', bounds: [0.2, 0.8], chartId: 'chartLime' },
+            { name: 'Megnut', key: 'megnut', unit: 'g', bounds: [0.8, 2.5], chartId: 'chartMegnut' },
+            { name: 'Cinnamon', key: 'cinnamon', unit: 'g', bounds: [0.3, 3], chartId: 'chartCinnamon' },
+        ];
+        const RATING_KEY = 'rating';
+        const LOCAL_STORAGE_KEY = 'colaData';
+        const N_LHS_SAMPLES = 5000;
+
+        // --- DOM ELEMENTS ---
+        const dataTableBody = document.getElementById('dataTableBody');
+        const getSuggestionButton = document.getElementById('getSuggestionButton');
+        const resetButton = document.getElementById('resetButton');
+        const toastNotification = document.getElementById('toastNotification');
+        const addRowButton      = document.getElementById('addRowButton');
+
+        // --- STATE ---
+        let currentData = []; // Array of objects {brownSugar, lime, ..., rating, id, isSuggestion}
+        let charts = {}; // To store Chart.js instances
+        let gpInstance = null;
+        let nextRowId = 0;
+
+        // --- UTILITY FUNCTIONS ---
+        
+        // Erf approximation (Abramowitz and Stegun 7.1.26)
+        function erf(x) {
+            const p = 0.3275911;
+            const a = [0.254829592, -0.284496736, 1.421413741, -1.453152027, 1.061405429];
+            const sign = (x < 0) ? -1 : 1;
+            x = Math.abs(x);
+            const t = 1.0 / (1.0 + p * x);
+            let term = t;
+            let sum = a[0] * term;
+            for (let i = 1; i < a.length; i++) {
+                term *= t;
+                sum += a[i] * term;
+            }
+            return sign * (1 - sum * Math.exp(-x * x));
+        }
+
+        function normalCdf(x, mean = 0, stdDev = 1) {
+            return 0.5 * (1 + erf((x - mean) / (stdDev * Math.sqrt(2))));
+        }
+
+        function normalPdf(x, mean = 0, stdDev = 1) {
+            return (1 / (stdDev * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * Math.pow((x - mean) / stdDev, 2));
+        }
+
+        function latinHypercubeSample(nSamples, bounds) {
+            const nDims = bounds.length;
+            const samples = Array(nSamples).fill(0).map(() => Array(nDims));
+            for (let j = 0; j < nDims; j++) {
+                const [min, max] = bounds[j];
+                const delta = (max - min) / nSamples;
+                const points = Array(nSamples).fill(0).map((_, i) => min + delta * (i + Math.random()));
+                for (let i = points.length - 1; i > 0; i--) { // Shuffle
+                    const k = Math.floor(Math.random() * (i + 1));
+                    [points[i], points[k]] = [points[k], points[i]];
+                }
+                for (let i = 0; i < nSamples; i++) {
+                    samples[i][j] = points[i];
+                }
+            }
+            return samples;
+        }
+        
+        function normalizeValue(value, min, max) { return (value - min) / (max - min); }
+        function denormalizeValue(normValue, min, max) { return normValue * (max - min) + min; }
+
+        function normalizeDataPoint(point, parameterDefs) {
+            const normalized = {};
+            parameterDefs.forEach((param, i) => {
+                normalized[param.key] = normalizeValue(point[param.key], param.bounds[0], param.bounds[1]);
+            });
+            return normalized;
+        }
+
+        function denormalizeDataPoint(normPoint, parameterDefs) {
+            const denormalized = {};
+            parameterDefs.forEach((param, i) => {
+                denormalized[param.key] = denormalizeValue(normPoint[param.key], param.bounds[0], param.bounds[1]);
+            });
+            return denormalized;
+        }
+
+        // --- GAUSSIAN PROCESS REGRESSOR ---
+        class GaussianProcessRegressor {
+            constructor(params) {
+                this.lengthScales = params.lengthScales || PARAMETERS.map(() => 0.5); // For normalized inputs
+                this.signalSigma = params.signalSigma || 1.0;
+                this.noiseSigma = params.noiseSigma || 0.1;
+                this.X_train_norm = null;
+                this.y_train = null;
+                this.alpha = null;
+                this.K_inv = null; // Store K_noisy_inv for variance calculation
+            }
+
+            kernel(x1_norm, x2_norm) {
+                let sqDist = 0;
+                for (let i = 0; i < x1_norm.length; i++) {
+                    sqDist += ((x1_norm[i] - x2_norm[i]) / this.lengthScales[i]) ** 2;
+                }
+                return (this.signalSigma ** 2) * Math.exp(-0.5 * sqDist);
+            }
+
+            fit(X_train_orig, y_train_orig) {
+                if (X_train_orig.length === 0) {
+                    this.X_train_norm = null; this.y_train = null; this.alpha = null; this.K_inv = null;
+                    return;
+                }
+                this.X_train_norm = X_train_orig.map(x => PARAMETERS.map((p, i) => normalizeValue(x[p.key], p.bounds[0], p.bounds[1])));
+                this.y_train = Matrix.columnVector(y_train_orig);
+                
+                const N = this.X_train_norm.length;
+                const K = new Matrix(N, N);
+                for (let i = 0; i < N; i++) {
+                    for (let j = 0; j < N; j++) {
+                        K.set(i, j, this.kernel(this.X_train_norm[i], this.X_train_norm[j]));
+                    }
+                }
+                const K_noisy = K.add(Matrix.eye(N, N).mul(this.noiseSigma ** 2));
+                
+                try {
+                    this.alpha = solve(K_noisy, this.y_train);
+                    this.K_inv = solve(K_noisy, Matrix.eye(N,N)); // K_noisy_inv
+                } catch (error) {
+                    console.error("GP fit failed (matrix singular?):", error);
+                    // Fallback or error handling: e.g., add more jitter
+                    const K_noisy_jitter = K_noisy.add(Matrix.eye(N, N).mul(1e-6));
+                     try {
+                        this.alpha = solve(K_noisy_jitter, this.y_train);
+                        this.K_inv = solve(K_noisy_jitter, Matrix.eye(N,N));
+                    } catch (error_jitter) {
+                        console.error("GP fit failed even with jitter:", error_jitter);
+                        this.alpha = null; this.K_inv = null; // Mark as unfit
+                    }
+                }
+            }
+
+            predict(X_test_orig) {
+                if (!this.alpha || !this.X_train_norm) {
+                    // If GP is not fitted (e.g. no data), predict mean of bounds and large variance
+                    const means = X_test_orig.map(() => 5.0); // Default mean (e.g. mid-rating)
+                    const variances = X_test_orig.map(() => this.signalSigma ** 2 + this.noiseSigma ** 2); // Max variance
+                    return { means, variances };
+                }
+
+                const X_test_norm = X_test_orig.map(x => PARAMETERS.map((p, i) => normalizeValue(x[p.key], p.bounds[0], p.bounds[1])));
+                const N_train = this.X_train_norm.length;
+                const N_test = X_test_norm.length;
+
+                const K_star = new Matrix(N_test, N_train);
+                for (let i = 0; i < N_test; i++) {
+                    for (let j = 0; j < N_train; j++) {
+                        K_star.set(i, j, this.kernel(X_test_norm[i], this.X_train_norm[j]));
+                    }
+                }
+                
+                const means = K_star.mmul(this.alpha).getColumn(0);
+
+                const K_star_star_diag = X_test_norm.map(x_norm => this.kernel(x_norm, x_norm) + this.noiseSigma ** 2);
+                
+                // Variance: diag(K_star_star) - diag(K_star @ K_inv @ K_star_T)
+                // K_inv is K_noisy_inv
+                const v = K_star.mmul(this.K_inv); // K_star @ K_inv
+                const variances = K_star_star_diag.map((k_ss_i, i) => {
+                    let term = 0;
+                    for(let j=0; j < N_train; j++) { // v[i,j] * K_star[i,j]
+                        term += v.get(i,j) * K_star.get(i,j);
+                    }
+                    return Math.max(1e-9, k_ss_i - term); // Ensure non-negative variance
+                });
+                
+                return { means, variances };
+            }
+        }
+
+        // --- EXPECTED IMPROVEMENT ---
+        function calculateExpectedImprovement(mean, variance, y_best, xi = 0.01) {
+            const stdDev = Math.sqrt(variance);
+            if (stdDev < 1e-9) return 0; // Avoid division by zero if variance is negligible
+
+            const Z = (mean - y_best - xi) / stdDev;
+            const ei = (mean - y_best - xi) * normalCdf(Z) + stdDev * normalPdf(Z);
+            return ei > 0 ? ei : 0; // EI must be non-negative
+        }
+
+        // --- DATA HANDLING ---
+        function loadData() {
+            const storedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+            let rawData;
+            if (storedData) {
+                rawData = JSON.parse(storedData);
+            } else {
+                // Convert initialData (arrays) to objects
+                rawData = initialData.map(arr => {
+                    const obj = {};
+                    PARAMETERS.forEach((param, i) => obj[param.key] = arr[i]);
+                    obj[RATING_KEY] = arr[PARAMETERS.length];
+                    return obj;
+                });
+            }
+            
+            currentData = rawData.map((item, index) => ({
+                ...item,
+                id: item.id === undefined ? nextRowId++ : item.id, // Assign new ID if missing
+                isSuggestion: item.isSuggestion === undefined ? false : item.isSuggestion,
+            }));
+            nextRowId = Math.max(0, ...currentData.map(d => d.id)) + 1;
+        }
+
+        function saveData() {
+            // Store only essential data, not runtime properties like 'id' if they are regenerated
+            const dataToStore = currentData.map(d => {
+                const storable = {};
+                PARAMETERS.forEach(p => storable[p.key] = d[p.key]);
+                storable[RATING_KEY] = d[RATING_KEY];
+                storable.isSuggestion = d.isSuggestion;
+                storable.id = d.id; // Persist ID to maintain consistency
+                return storable;
+            });
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dataToStore));
+        }
+
+        function addDataRow(rowData, isSuggestion = false) {
+            const newRow = { ...rowData, id: nextRowId++, isSuggestion };
+            currentData.push(newRow);
+            renderTable();
+            saveData();
+            if (!isSuggestion || (isSuggestion && newRow[RATING_KEY] !== null && newRow[RATING_KEY] !== undefined)) {
+                updateGPAndCharts();
+            }
+            checkSuggestionButtonState();
+            return newRow;
+        }
+
+        function deleteDataRow(rowId) {
+            currentData = currentData.filter(row => row.id !== rowId);
+            renderTable();
+            saveData();
+            updateGPAndCharts();
+            checkSuggestionButtonState();
+        }
+
+        function updateDataCell(rowId, columnKey, value) {
+            const rowIndex = currentData.findIndex(row => row.id === rowId);
+            if (rowIndex === -1) return;
+
+            let parsedValue = value;
+            if (columnKey === RATING_KEY) {
+                parsedValue = value === '' || value === null ? null : parseFloat(value);
+                if (parsedValue !== null && (isNaN(parsedValue) || parsedValue < 1 || parsedValue > 10)) {
+                     showToast("Rating must be a number between 1 and 10.", true); return;
+                }
+            } else {
+                const paramDef = PARAMETERS.find(p => p.key === columnKey);
+                parsedValue = parseFloat(value);
+                 if (isNaN(parsedValue) || parsedValue < 0) { // Basic validation, could use paramDef.bounds
+                    showToast(`${paramDef.name} must be a non-negative number.`, true); return;
+                }
+                parsedValue = parseFloat(parsedValue.toFixed(2)); // Round to 2 decimal places
+            }
+            
+            currentData[rowIndex][columnKey] = parsedValue;
+
+            if (columnKey === RATING_KEY && currentData[rowIndex].isSuggestion && parsedValue !== null) {
+                currentData[rowIndex].isSuggestion = false; // No longer just a suggestion
+                const rowElement = document.querySelector(`tr[data-id="${rowId}"]`);
+                if (rowElement) rowElement.classList.remove('suggested-row');
+            }
+            
+            saveData();
+            updateGPAndCharts(); // Refit GP and update charts on data change
+            checkSuggestionButtonState();
+        }
+
+        // --- UI RENDERING ---
+        function renderTable() {
+            dataTableBody.innerHTML = ''; // Clear existing rows
+            currentData.forEach(rowData => {
+                const tr = document.createElement('tr');
+                tr.dataset.id = rowData.id;
+                if (rowData.isSuggestion && (rowData[RATING_KEY] === null || rowData[RATING_KEY] === undefined)) {
+                    tr.classList.add('suggested-row');
+                }
+
+                PARAMETERS.forEach(param => {
+                    const td = document.createElement('td');
+                    td.textContent = rowData[param.key] !== undefined ? rowData[param.key] : '';
+                    td.dataset.colName = param.key;
+                    td.setAttribute('contenteditable', 'true');
+                    td.setAttribute('inputmode', 'decimal');
+                    td.setAttribute('aria-label', `${param.name} value for row ${rowData.id}`);
+                    td.addEventListener('blur', (e) => handleCellEdit(e, rowData.id, param.key));
+                    td.addEventListener('keydown', (e) => handleCellKeydown(e, rowData.id, param.key));
+                    tr.appendChild(td);
+                });
+
+                // Rating cell
+                const tdRating = document.createElement('td');
+                tdRating.textContent = (rowData[RATING_KEY] === null || rowData[RATING_KEY] === undefined) ? (rowData.isSuggestion ? 'Rate me!' : '') : rowData[RATING_KEY];
+                tdRating.dataset.colName = RATING_KEY;
+                tdRating.setAttribute('contenteditable', 'true');
+                tdRating.setAttribute('inputmode', 'decimal');
+                tdRating.setAttribute('aria-label', `Rating for row ${rowData.id}`);
+                tdRating.addEventListener('blur', (e) => handleCellEdit(e, rowData.id, RATING_KEY));
+                tdRating.addEventListener('keydown', (e) => handleCellKeydown(e, rowData.id, RATING_KEY));
+                tr.appendChild(tdRating);
+
+                // Actions cell
+                const tdActions = document.createElement('td');
+                tdActions.classList.add('actions-cell');
+                const deleteBtn = document.createElement('button');
+                deleteBtn.innerHTML = '&times;'; // Multiplication sign as 'x'
+                deleteBtn.setAttribute('aria-label', `Delete row ${rowData.id}`);
+                deleteBtn.addEventListener('click', () => deleteDataRow(rowData.id));
+                tdActions.appendChild(deleteBtn);
+                tr.appendChild(tdActions);
+
+                dataTableBody.appendChild(tr);
+            });
+        }
+        
+        function highlightRow(rowId) {
+            const rowElement = document.querySelector(`tr[data-id="${rowId}"]`);
+            if (rowElement) {
+                rowElement.classList.add('suggested-row'); // Use existing class or a new one
+                rowElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        // define unique colors for each variable
+        const varColors = {
+            brownSugar: '#A0522D',
+            lime:       '#2E8B57',
+            megnut:     '#800080',
+            cinnamon:   '#D2691E'
+        };
+
+        function createCharts() {
+            PARAMETERS.forEach(param => {
+                const color = varColors[param.key];
+                const ctx = document.getElementById(param.chartId).getContext('2d');
+                charts[param.key] = new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [
+                            {
+                                label: 'Observed Data',
+                                data: [],
+                                type: 'scatter',
+                                pointBackgroundColor: color,
+                                pointRadius: 5,
+                            },
+                            {
+                                label: 'GP Mean',
+                                data: [],
+                                type: 'line',
+                                borderColor: color,
+                                borderWidth: 2,
+                                fill: false,
+                                tension: 0.1,
+                                pointRadius: 0, // No points for the line itself
+                            },
+                            {
+                                label: '95% CI',
+                                data: [],
+                                type: 'line',
+                                borderColor: hexToRgba(color, 0.2),
+                                backgroundColor: hexToRgba(color, 0.2),
+                                borderWidth: 1,
+                                fill: '+1', // Fill to next dataset (CI lower bound)
+                                pointRadius: 0,
+                                order: 3 // Ensure it's drawn correctly relative to lower bound
+                            },
+                             { // Invisible dataset for lower CI bound, used for filling
+                                label: 'CI Lower Bound', // Not shown in legend
+                                data: [], // {x, y} points for CI lower bound
+                                type: 'line',
+                                borderColor: 'transparent',
+                                backgroundColor: 'transparent',
+                                pointRadius: 0,
+                                fill: false, // Filled by the upper bound dataset
+                                showInLegend: false,
+                                order: 2
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                type: 'linear',
+                                position: 'bottom',
+                                title: {
+                                   font: { size: 14, weight: '600' },
+                                    display: true,
+                                    text: `${param.name} (${param.unit})`
+                                },
+                                min: param.bounds[0],
+                                max: param.bounds[1],
+                            },
+                            y: {
+                                title: {
+                                   font: { size: 14, weight: '600' },
+                                    display: true,
+                                    text: 'Predicted Rating'
+                                },
+                                min: 1, // Assuming ratings are 1-10
+                                max: 10,
+                            }
+                        },
+                        plugins: {
+                            legend: { display: true, position: 'top' },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
+        function updateCharts() {
+            if (!gpInstance || !gpInstance.alpha) { // GP not fitted or no data
+                 PARAMETERS.forEach(param => {
+                    if (charts[param.key]) {
+                        charts[param.key].data.datasets[0].data = [];
+                        charts[param.key].data.datasets[1].data = [];
+                        charts[param.key].data.datasets[2].data = [];
+                        charts[param.key].data.datasets[3].data = [];
+                        charts[param.key].update();
+                    }
+                });
+                return;
+            }
+
+            const ratedData = currentData.filter(d => d[RATING_KEY] !== null && d[RATING_KEY] !== undefined);
+            if (ratedData.length === 0) return; // No data to plot or model
+
+            const meansOfOtherParams = {};
+            PARAMETERS.forEach(p => {
+                const sum = ratedData.reduce((acc, item) => acc + item[p.key], 0);
+                meansOfOtherParams[p.key] = sum / ratedData.length;
+            });
+
+            PARAMETERS.forEach((param, paramIdx) => {
+                const chart = charts[param.key];
+                if (!chart) return;
+
+                // Observed data points for this chart
+                const observedPoints = ratedData.map(d => ({ x: d[param.key], y: d[RATING_KEY] }));
+                chart.data.datasets[0].data = observedPoints;
+
+                // GP prediction line and CI
+                const nPlotPoints = 50;
+                const plotXValues = Array.from({ length: nPlotPoints }, (_, i) => 
+                    param.bounds[0] + (param.bounds[1] - param.bounds[0]) * i / (nPlotPoints - 1)
+                );
+
+                const testPointsForChart = plotXValues.map(val => {
+                    const point = {};
+                    PARAMETERS.forEach(p => {
+                        point[p.key] = (p.key === param.key) ? val : meansOfOtherParams[p.key];
+                    });
+                    return point;
+                });
+
+                const { means: predMeans, variances: predVariances } = gpInstance.predict(testPointsForChart);
+                
+                const gpMeanData = plotXValues.map((x, i) => ({ x, y: predMeans[i] }));
+                const ciUpperData = plotXValues.map((x, i) => ({ x, y: predMeans[i] + 1.96 * Math.sqrt(predVariances[i]) }));
+                const ciLowerData = plotXValues.map((x, i) => ({ x, y: predMeans[i] - 1.96 * Math.sqrt(predVariances[i]) }));
+
+                chart.data.datasets[1].data = gpMeanData;
+                chart.data.datasets[2].data = ciUpperData; // Upper CI bound
+                chart.data.datasets[3].data = ciLowerData; // Lower CI bound (for fill target)
+                
+                chart.update('none'); // 'none' for no animation, faster updates
+            });
+        }
+        
+        // helper to convert hex to rgba for CI bands
+        function hexToRgba(hex, alpha) {
+            const c = hex.replace('#','');
+            const bigint = parseInt(c, 16);
+            const r = (bigint >> 16) & 255;
+            const g = (bigint >> 8) & 255;
+            const b = bigint & 255;
+            return `rgba(${r},${g},${b},${alpha})`;
+        }
+
+        function showToast(message, isError = false) {
+            toastNotification.textContent = message;
+            toastNotification.style.backgroundColor = isError ? dangerColor : accentColor;
+            toastNotification.classList.add('show');
+            setTimeout(() => {
+                toastNotification.classList.remove('show');
+            }, 3000);
+        }
+
+        // --- EVENT HANDLERS ---
+        function handleCellEdit(event, rowId, columnKey) {
+            const value = event.target.textContent.trim();
+            updateDataCell(rowId, columnKey, value);
+            // Re-render the specific cell to format it correctly (e.g. if validation changed it)
+            const cellData = currentData.find(r => r.id === rowId)[columnKey];
+            event.target.textContent = (cellData === null || cellData === undefined) ? '' : cellData;
+        }
+
+        function handleCellKeydown(event, rowId, columnKey) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                event.target.blur(); // Trigger blur to save
+            } else if (event.key === 'Escape') {
+                event.preventDefault();
+                // Revert to original value (not implemented here, blur will save current)
+                event.target.blur();
+            }
+            // Add ArrowUp/ArrowDown/Tab for navigation if desired
+        }
+
+        function handleGetSuggestion() {
+            if (!gpInstance || !gpInstance.alpha) {
+                showToast("Not enough data or GP not trained. Please add/rate more samples.", true);
+                return;
+            }
+            
+            const ratedData = currentData.filter(d => d[RATING_KEY] !== null && d[RATING_KEY] !== undefined);
+            if (ratedData.length === 0) {
+                 showToast("No rated data available to make suggestions.", true);
+                 return;
+            }
+            const y_best = Math.max(...ratedData.map(d => d[RATING_KEY]));
+
+            const parameterBoundsForLHS = PARAMETERS.map(p => p.bounds);
+            const candidateSamplesRaw = latinHypercubeSample(N_LHS_SAMPLES, parameterBoundsForLHS);
+            
+            const candidateSamples = candidateSamplesRaw.map(sampleArr => {
+                const sampleObj = {};
+                PARAMETERS.forEach((p, i) => sampleObj[p.key] = sampleArr[i]);
+                return sampleObj;
+            });
+
+            const { means, variances } = gpInstance.predict(candidateSamples);
+
+            let maxEI = -Infinity;
+            let bestCandidate = null;
+
+            for (let i = 0; i < candidateSamples.length; i++) {
+                const ei = calculateExpectedImprovement(means[i], variances[i], y_best);
+                if (ei > maxEI) {
+                    maxEI = ei;
+                    bestCandidate = candidateSamples[i];
+                }
+            }
+
+            if (bestCandidate) {
+                // Round to reasonable precision
+                const roundedCandidate = {};
+                PARAMETERS.forEach(p => {
+                    roundedCandidate[p.key] = parseFloat(bestCandidate[p.key].toFixed(p.name === 'Lime' ? 2 : 1));
+                });
+                roundedCandidate[RATING_KEY] = null; // Suggested, so no rating yet
+
+                const newRow = addDataRow(roundedCandidate, true);
+                highlightRow(newRow.id);
+                showToast("New suggestion added to the table!");
+            } else {
+                showToast("Could not find a suitable suggestion.", true);
+            }
+            checkSuggestionButtonState(); // Disable button as new suggestion needs rating
+        }
+
+        function handleReset() {
+            if (confirm("Are you sure you want to reset all data? This cannot be undone.")) {
+                localStorage.removeItem(LOCAL_STORAGE_KEY);
+                window.location.reload();
+            }
+        }
+        
+        addRowButton.addEventListener('click', () => {
+            // insert blank row for manual entry
+            const blank = {};
+            PARAMETERS.forEach(p => blank[p.key] = '');
+            blank[RATING_KEY] = null;
+            addDataRow(blank, false);
+        });
+
+        function checkSuggestionButtonState() {
+            const hasUnratedSuggestions = currentData.some(row => (row.isSuggestion || row[RATING_KEY] === null || row[RATING_KEY] === undefined));
+            getSuggestionButton.disabled = hasUnratedSuggestions;
+            if (hasUnratedSuggestions) {
+                getSuggestionButton.title = "Please rate all existing entries before getting a new suggestion.";
+            } else {
+                getSuggestionButton.title = "";
+            }
+        }
+        
+        function updateGPAndCharts() {
+            const ratedData = currentData.filter(d => d[RATING_KEY] !== null && d[RATING_KEY] !== undefined);
+            if (ratedData.length > 0) {
+                const X_train = ratedData.map(d => {
+                    const x = {};
+                    PARAMETERS.forEach(p => x[p.key] = d[p.key]);
+                    return x;
+                });
+                const y_train = ratedData.map(d => d[RATING_KEY]);
+                
+                if (!gpInstance) {
+                    gpInstance = new GaussianProcessRegressor({
+                        // lengthScales: [0.5, 0.5, 0.5, 0.5], // For normalized inputs
+                        // signalSigma: 1.0,
+                        // noiseSigma: 0.1
+                        // Using defaults from class for now
+                    });
+                }
+                gpInstance.fit(X_train, y_train);
+            } else {
+                if (gpInstance) { // Clear GP if no rated data
+                    gpInstance.fit([], []);
+                }
+            }
+            updateCharts();
+        }
+
+        // --- INITIALIZATION ---
+        function init() {
+            loadData();
+            renderTable();
+            createCharts();
+            updateGPAndCharts(); // Initial GP fit and chart update
+            checkSuggestionButtonState();
+
+            getSuggestionButton.addEventListener('click', handleGetSuggestion);
+            resetButton.addEventListener('click', handleReset);
+        }
+
+        // Start the app
+        init();
+
+    </script>
+</body>
+</html>
+

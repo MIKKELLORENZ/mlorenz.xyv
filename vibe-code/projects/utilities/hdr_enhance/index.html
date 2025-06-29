@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HDR Enhance - Transform Your Images</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <main>
+            <div class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-content">
+                        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17,8 12,3 7,8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <h3>Upload Your Image</h3>
+                        <p>Drop your image here or click to browse</p>
+                        <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.webp" hidden>
+                        <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                            Choose File
+                        </button>
+                        <div class="upload-progress" id="uploadProgress">
+                            <div class="spinner"></div>
+                            <span>Processing image...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="main-content hidden" id="mainContent">
+                <div class="controls-panel">
+                    <h3>HDR Enhancement</h3>
+                    <div class="controls">
+                        <div class="control-group">
+                            <label for="hdrBlend">Blend</label>
+                            <input type="range" id="hdrBlend" min="0" max="100" value="50">
+                            <span id="hdrBlendValue">50%</span>
+                            <small>Blend between original (0%) and HDR enhanced (100%)</small>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="exposure">Exposure</label>
+                            <input type="range" id="exposure" min="-2" max="2" step="0.1" value="0">
+                            <span id="exposureValue">0.0</span>
+                            <small>Adjust overall brightness (-2 to +2 stops)</small>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="vibrance">Vibrance</label>
+                            <input type="range" id="vibrance" min="0" max="200" value="100">
+                            <span id="vibranceValue">100%</span>
+                            <small>Enhance color saturation selectively (0% to 200%)</small>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="transitionZone">Transition Zone</label>
+                            <input type="range" id="transitionZone" min="10" max="100" value="50">
+                            <span id="transitionZoneValue">50%</span>
+                            <small>Control HDR effect transition smoothness (10% = sharp, 100% = smooth)</small>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-secondary" onclick="uploadNew()">New</button>
+                        <button class="btn btn-secondary" onclick="resetFilters()">Reset</button>
+                        <button class="btn btn-primary" onclick="downloadImage(event)">Download</button>
+                        <div class="processing-indicator" id="processingIndicator">
+                            <div class="spinner"></div>
+                            <span>Processing full resolution...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="images-panel">
+                    <div class="split-view-container">
+                        <h4>Original vs HDR Enhanced</h4>
+                        <div class="split-view" id="splitView">
+                            <canvas id="originalCanvas" class="split-canvas"></canvas>
+                            <canvas id="resultCanvas" class="split-canvas"></canvas>
+                            <div class="split-slider" id="splitSlider">
+                                <div class="split-handle">
+                                    <div class="split-line"></div>
+                                    <div class="split-grip"></div>
+                                </div>
+                            </div>
+                            <div class="split-labels">
+                                <span class="label-left">ORIGINAL</span>
+                                <span class="label-right">HDR ENHANCED</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

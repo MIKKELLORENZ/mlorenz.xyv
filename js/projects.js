@@ -37,6 +37,20 @@ document.addEventListener('DOMContentLoaded', function() {
             type: "iframe" // Explicitly set to load in iframe
         },
 
+        {
+            id: "hdr_enchance",
+            title: "HDR Enhance",
+            description: "Enhance your images with simulated High Dynamic Range (HDR) processing.",
+            thumbnail: "../vibe-code/projects/utilities/hdr_enhance/thumbnail.jpg",
+
+            category: "utilities",
+            tags: ["image processing", "hdr", "javascript"],
+            date: "2025-06-29",
+            path: "projects/utilities/hdr_enhance/index.html",
+            type: "iframe" // Explicitly set to load in iframe
+        },
+
+
     ];
 
     const projectsContainer = document.getElementById('projects-container');
