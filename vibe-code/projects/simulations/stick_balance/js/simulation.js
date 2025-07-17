@@ -336,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
                 // Draw background elements only
-                this.renderer.drawBackground();
+                this.renderer.drawBackground(0.5);
                 
                 // Draw clouds with minimal wind
                 this.renderer.drawClouds(0.5);
@@ -699,8 +699,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const action = this.agent.selectAction(this.currentState);
                     
                     // Log actions in early episodes to verify the agent is moving in both directions
-                    if (this.agent.episodeCount < 10 && this.episodeSteps % 10 === 0) {
-                        console.log(`Episode ${this.agent.episodeCount}, Step ${this.episodeSteps}: Action = ${action.toFixed(2)}`);
+                    if (this.agent.episodeCount < 20 && this.episodeSteps % 20 === 0) {
+                        console.log(`Episode ${this.agent.episodeCount}, Step ${this.episodeSteps}: Action = ${action.toFixed(3)}, Angle = ${(this.currentState.stickAngle * 180/Math.PI).toFixed(1)}°, PlatformPos = ${this.currentState.platformPos.toFixed(2)}, Exploration = ${this.agent.explorationRate.toFixed(3)}`);
                     }
                     
                     const result = this.environment.step(action);
@@ -713,14 +713,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         this.episodeSteps = 0;
                         
                         // Skip the rest of this frame's processing
-                        this.renderer.render(this.currentState, 0); // Render with zero wind
+                        this.renderer.render(this.currentState, 0, this.agent.episodeCount); // Render with zero wind
                         this.animationId = requestAnimationFrame(() => this.animationLoop());
                         return;
                     }
                     
                     // Log rewards for debugging
-                    if (this.agent.episodeCount < 5 && this.episodeSteps % 20 === 0) {
-                        console.log(`Reward: ${result.reward.toFixed(2)}, Done: ${result.done}, Wind: ${result.wind.toFixed(2)}`);
+                    if (this.agent.episodeCount < 10 && this.episodeSteps % 50 === 0) {
+                        console.log(`Reward: ${result.reward.toFixed(2)}, Done: ${result.done}, Wind: ${result.wind.toFixed(2)}, Total Reward: ${result.totalReward.toFixed(1)}`);
                     }
                     
                     // Update electric car sound based on platform velocity
@@ -749,46 +749,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     
                     // Learn from the result
-                    this.agent.learn(this.currentState, action, result.reward, result.state, result.done);
-                    
-                    // Optimize forced learning to prevent slowdown
-                    // Only do forced learning if we're not seeing NaN issues
-                    if (this.forceLearn && (this.totalSteps % 3 === 0)) { // Increased frequency from 5 to 3
-                        // Use a single reused batch to prevent memory churn
-                        if (!this._cachedBatch || this.totalSteps % 25 === 0) { // More frequent batch updates (from 100 to 25)
-                            this._cachedBatch = this.agent.sampleBatch();
+                    this.agent.learn(this.currentState, action, result.reward, result.state, result.done);                        // Debug learning progress in early episodes
+                        if (this.agent.episodeCount <= 10 && this.episodeSteps % 100 === 0) {
+                            const debug = this.agent.verifyLearning();
+                            console.log(`Learning check - Episode ${this.agent.episodeCount}, Step ${this.episodeSteps}: Buffer=${debug.bufferSize}, WeightChange=${debug.weightChange.toFixed(6)}, SumW1=${debug.sumW1.toFixed(2)}`);
                         }
-                        
-                        if (this._cachedBatch && this._cachedBatch.experiences && 
-                            this._cachedBatch.experiences.length > 0) {
-                            // Only do a single update per frame to maintain performance
-                            const loss = this.agent.trainOnBatch(this._cachedBatch);
-                            
-                            // More frequent weight change calculations (from 20 to 10)
-                            if (this.totalSteps % 10 === 0) {
-                                const weightChangeValue = this.agent.calculateWeightChange();
-                                this.agent.lastWeightChange = Math.max(0.0001, weightChangeValue);
-                                
-                                if (weightChange) {
-                                    weightChange.textContent = this.agent.lastWeightChange.toFixed(4);
-                                }
-                                
-                                // Add to history more frequently (from 50 to 20)
-                                if (this.totalSteps % 20 === 0) {
-                                    // Keep history size bounded
-                                    if (this.agent.weightChanges.length >= 200) {
-                                        this.agent.weightChanges.shift();
-                                    }
-                                    this.agent.weightChanges.push(this.agent.lastWeightChange);
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Update target network less frequently
-                    if (this.totalSteps % 100 === 0) {
-                        this.agent.updateTargetNetwork();
-                    }
                     
                     // Update current state
                     this.currentState = result.state;
@@ -801,7 +766,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Only render every other frame when episode count is high
                     const shouldRender = this.agent.episodeCount < 30 || this.totalSteps % 2 === 0;
                     if (shouldRender) {
-                        this.renderer.render(this.currentState, result.wind);
+                        this.renderer.render(this.currentState, result.wind, this.agent.episodeCount);
                     }
                     
                     // If episode is done
@@ -819,8 +784,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                         
                         // Log episode info less frequently as training progresses
-                        if (this.agent.episodeCount % 10 === 0 || this.agent.episodeCount < 30) {
-                            console.log(`Episode ${this.agent.episodeCount} completed. Duration: ${this.episodeSteps}, Reward: ${result.totalReward.toFixed(2)}`);
+                        if (this.agent.episodeCount % 5 === 0 || this.agent.episodeCount < 50) {
+                            console.log(`Episode ${this.agent.episodeCount} completed. Duration: ${this.episodeSteps} steps (${(this.episodeSteps * this.environment.physics.timestep).toFixed(1)}s), Reward: ${result.totalReward.toFixed(2)}, Exploration: ${this.agent.explorationRate.toFixed(3)}`);
                         }
                         
                         // Play fallen sound if needed

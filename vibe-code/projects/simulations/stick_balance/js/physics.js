@@ -5,24 +5,24 @@ class Physics {
     constructor() {
         // Physics constants
         this.gravity = 9.8;    // Gravity in m/s^2
-        this.timestep = 0.02;  // Physics update timestep in seconds
-        this.friction = 0.2;   // Increased friction for better stability
+        this.timestep = 0.016;  // Shorter timestep for better stability (60 FPS)
+        this.friction = 0.1;   // Reduced friction for more responsiveness
         
         // Stick properties
         this.stickLength = 2.0;      // Length of the stick in meters
-        this.stickMass = 0.8;        // Slightly lighter for easier balancing
+        this.stickMass = 0.5;        // Lighter stick for easier balancing
         
         // Platform properties
         this.platformWidth = 1.0;    // Width of the platform in meters
-        this.platformMass = 5.0;     // Mass of the platform in kg
+        this.platformMass = 3.0;     // Lighter platform for better responsiveness
         this.wheelRadius = 0.2;      // Radius of the wheels in meters
-        this.maxForce = 15.0;        // Reduced max force for smoother control
+        this.maxForce = 20.0;        // Increased max force for better control
         
         // Boundaries
         this.worldWidth = 10.0;      // Width of the world in meters
         
         // Add angular damping to make balancing more feasible
-        this.angularDamping = 0.05;
+        this.angularDamping = 0.02;  // Reduced damping for more natural movement
     }
     
     /**
@@ -125,8 +125,8 @@ class Physics {
      * @returns {boolean} - True if the stick has fallen
      */
     hasStickFallen(state) {
-        // Consider the stick fallen if it's tilted more than 35 degrees (π/5.14 radians)
-        return Math.abs(state.stickAngle) > Math.PI / 4.5;
+        // Consider the stick fallen if it's tilted more than 30 degrees (more forgiving for learning)
+        return Math.abs(state.stickAngle) > Math.PI / 6; // 30 degrees
     }
     
     /**

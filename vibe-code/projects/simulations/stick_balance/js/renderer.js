@@ -29,6 +29,10 @@ class Renderer {
         
         // Generate grass tufts for more visual detail
         this.grassTufts = this.generateGrassTufts();
+        
+        // Wind indicator smoothing
+        this.smoothWindRotation = 0;
+        this.smoothWindStrength = 0;
     }
     
     /**
@@ -78,7 +82,7 @@ class Renderer {
      * Initialize wind stream particles
      */
     initWindStreams() {
-        const numStreams = 50; // Increase the number of wind stream particles
+        const numStreams = 80; // Increased for more prominent wind visualization
         this.windStreams = [];
         
         for (let i = 0; i < numStreams; i++) {
@@ -92,9 +96,9 @@ class Renderer {
     createWindStreamParticle() {
         return {
             x: Math.random() * this.worldWidth - this.worldWidth / 2,
-            y: Math.random() * 5, // Height between 0-5 meters
-            length: Math.random() * 0.3 + 0.1, // Length between 0.1-0.4 meters
-            alpha: Math.random() * 0.3 + 0.1, // Transparency between 0.1-0.4
+            y: Math.random() * 6, // Height between 0-6 meters (increased range)
+            length: Math.random() * 0.5 + 0.2, // Length between 0.2-0.7 meters (increased)
+            alpha: Math.random() * 0.4 + 0.2, // Transparency between 0.2-0.6 (more visible)
             speed: 0, // Will be updated based on wind
             waveOffset: Math.random() * Math.PI * 2 // Add wave offset for wavy motion
         };
@@ -120,6 +124,28 @@ class Renderer {
     }
     
     /**
+     * Draw episode counter in top left corner
+     * @param {number} episodeNumber - Current episode number
+     */
+    drawEpisodeCounter(episodeNumber) {
+        const ctx = this.ctx;
+        
+        // Set up text styling
+        ctx.font = 'bold 24px Arial';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.lineWidth = 2;
+        
+        const text = `Episode: ${episodeNumber}`;
+        const x = 20;
+        const y = 35;
+        
+        // Draw text with outline for better visibility
+        ctx.strokeText(text, x, y);
+        ctx.fillText(text, x, y);
+    }
+    
+    /**
      * Convert world coordinates to screen coordinates
      * @param {number} x - World x coordinate
      * @param {number} y - World y coordinate
@@ -136,7 +162,7 @@ class Renderer {
     /**
      * Draw the sky and ground
      */
-    drawBackground() {
+    drawBackground(windForce) {
         const ctx = this.ctx;
         
         // Sky (light blue)
@@ -148,8 +174,8 @@ class Renderer {
         ctx.fillStyle = '#3A7D44';
         ctx.fillRect(0, groundLevel, this.canvas.width, this.canvas.height - groundLevel);
         
-        // Draw grass tufts for more detail
-        this.drawGrassTufts();
+        // Draw grass tufts with wind effect
+        this.drawGrassTufts(windForce);
         
         // Draw a soil/dirt line
         ctx.strokeStyle = '#5D4037';
@@ -163,20 +189,28 @@ class Renderer {
     /**
      * Draw individual grass tufts for more detailed ground
      */
-    drawGrassTufts() {
+    drawGrassTufts(windForce) {
         const ctx = this.ctx;
         const groundLevel = this.worldToScreen(0, 0).y;
+        
+        // Calculate wind effect on grass
+        const normalizedWind = windForce / this.environment.maxWindStrength || 0;
+        const windSway = normalizedWind * 8; // Max 8 pixel sway
         
         this.grassTufts.forEach(tuft => {
             const { x: screenX } = this.worldToScreen(tuft.x, 0);
             const tuftWidth = tuft.width * this.scale;
             const tuftHeight = tuft.height * this.scale;
             
-            // Draw a grass tuft (small triangle)
+            // Apply gentle wind sway - limit to prevent extreme movements
+            const swayAmount = Math.min(Math.max(windSway * (0.5 + Math.random() * 0.5), -15), 15);
+            const tipX = screenX + swayAmount;
+            
+            // Draw a grass tuft (triangle that can bend with wind)
             ctx.fillStyle = `rgb(76, ${157 + tuft.shade}, 76)`;
             ctx.beginPath();
             ctx.moveTo(screenX - tuftWidth / 2, groundLevel);
-            ctx.lineTo(screenX, groundLevel - tuftHeight);
+            ctx.lineTo(tipX, groundLevel - tuftHeight); // Tip can move with wind
             ctx.lineTo(screenX + tuftWidth / 2, groundLevel);
             ctx.closePath();
             ctx.fill();
@@ -195,31 +229,37 @@ class Renderer {
         
         // Update and draw each cloud
         sortedClouds.forEach(cloud => {
-            // Update cloud position based on wind, with parallax effect
+            // Update cloud position based on wind, with enhanced parallax effect
             const normalizedWind = windForce / this.environment.maxWindStrength;
             
-            // Slowly adjust cloud speed (deeper clouds move slower - parallax)
-            cloud.speed += (normalizedWind * 0.02 - cloud.speed) * 0.01;
-            cloud.x += cloud.speed * cloud.depth; // Multiply by depth for parallax effect
+            // Enhanced parallax: background clouds move slower, foreground clouds move faster
+            const parallaxMultiplier = 0.3 + (cloud.depth * 1.4); // Range from 0.3 to 1.7
+            
+            // Slowly adjust cloud speed with better responsiveness
+            const targetSpeed = normalizedWind * 0.03 * parallaxMultiplier;
+            cloud.speed += (targetSpeed - cloud.speed) * 0.02;
+            cloud.x += cloud.speed;
             
             // Wrap clouds around the screen
-            if (cloud.x > this.worldWidth / 2) {
-                cloud.x = -this.worldWidth / 2;
-            } else if (cloud.x < -this.worldWidth / 2) {
-                cloud.x = this.worldWidth / 2;
+            if (cloud.x > this.worldWidth / 2 + 2) {
+                cloud.x = -this.worldWidth / 2 - 2;
+            } else if (cloud.x < -this.worldWidth / 2 - 2) {
+                cloud.x = this.worldWidth / 2 + 2;
             }
             
-            // Draw cloud
-            const { x: screenX, y: screenY } = this.worldToScreen(cloud.x, 3 + cloud.y / this.scale);
+            // Draw cloud with depth-based vertical offset
+            const depthOffset = (1 - cloud.depth) * 0.5; // Background clouds higher
+            const { x: screenX, y: screenY } = this.worldToScreen(cloud.x, 3 + cloud.y / this.scale + depthOffset);
             
-            // Draw cloud segments (puffy parts)
-            ctx.fillStyle = `rgba(255, 255, 255, ${cloud.density})`;
+            // Draw cloud segments (puffy parts) with depth-based opacity
+            const depthOpacity = cloud.density * (0.4 + cloud.depth * 0.6); // Background clouds more transparent
+            ctx.fillStyle = `rgba(255, 255, 255, ${depthOpacity})`;
             const segmentWidth = cloud.width * this.scale / cloud.segments;
             
             for (let i = 0; i < cloud.segments; i++) {
                 const segmentX = screenX + i * segmentWidth * 0.8;
-                const segmentY = screenY - (i % 2) * 10; // Vary height slightly
-                const segmentRadius = segmentWidth * 0.8;
+                const segmentY = screenY - (i % 2) * 10 * cloud.depth; // Vary height with depth
+                const segmentRadius = segmentWidth * 0.8 * (0.7 + cloud.depth * 0.3); // Size varies with depth
                 
                 // Draw a circle for each cloud segment
                 ctx.beginPath();
@@ -236,26 +276,27 @@ class Renderer {
     drawWindStreams(windForce) {
         const ctx = this.ctx;
         
-        // Ensure there's always some visual representation of wind streams
-        // Normalize wind but ensure a minimum visual effect
+        // More prominent wind visualization
         const normalizedWind = windForce / this.environment.maxWindStrength;
         
-        // Wind base properties that are always visible
-        const minSpeed = 0.02;
-        const minAlpha = 0.15;
-        const minLength = 0.05;
+        // Enhanced wind properties for better visibility
+        const minSpeed = 0.03;
+        const minAlpha = 0.25; // Increased visibility
+        const minLength = 0.08;
         
         this.windStreams.forEach(stream => {
-            // Calculate wind effect - ensure minimum visibility even with zero wind
-            const effectiveWind = Math.sign(normalizedWind) * Math.max(Math.abs(normalizedWind), 0.1);
+            // Calculate wind effect with better scaling
+            const effectiveWind = normalizedWind;
+            const windMagnitude = Math.abs(effectiveWind);
             
-            // Update stream position
-            stream.speed = (effectiveWind * 0.1) || minSpeed; // Ensure minimum speed
+            // Update stream position with proper direction
+            stream.speed = effectiveWind * 0.15 + (Math.sign(effectiveWind) || 1) * minSpeed;
             stream.x += stream.speed;
             
-            // Add wavy motion that's more pronounced with stronger wind
-            const waveAmplitude = 0.02 + Math.abs(effectiveWind) * 0.08;
-            stream.y += Math.sin(performance.now() / 500 + stream.waveOffset) * waveAmplitude;
+            // Enhanced wavy motion for more dynamic appearance
+            const waveAmplitude = 0.03 + windMagnitude * 0.12;
+            const waveFreq = 400 + windMagnitude * 200; // Faster waves with stronger wind
+            stream.y += Math.sin(performance.now() / waveFreq + stream.waveOffset) * waveAmplitude;
             
             // Screen wrapping
             if (stream.x > this.worldWidth / 2) {
@@ -267,19 +308,35 @@ class Renderer {
             // Calculate screen coordinates
             const { x: startX, y: startY } = this.worldToScreen(stream.x, stream.y);
             
-            // Stream length increases with wind strength
-            const streamLength = minLength + Math.abs(effectiveWind) * stream.length;
-            const { x: endX } = this.worldToScreen(stream.x + streamLength, stream.y);
+            // Enhanced stream length and direction indication
+            const streamLength = minLength + windMagnitude * stream.length * 1.5;
+            const direction = Math.sign(effectiveWind) || 1;
+            const { x: endX } = this.worldToScreen(stream.x + streamLength * direction, stream.y);
             
-            // Alpha increases with wind strength but has a minimum value
-            const alphaValue = minAlpha + stream.alpha * Math.abs(effectiveWind);
+            // More prominent alpha scaling
+            const alphaValue = minAlpha + stream.alpha * windMagnitude * 1.2;
             
-            ctx.strokeStyle = `rgba(93, 146, 177, ${alphaValue})`;
-            ctx.lineWidth = 1 + Math.abs(effectiveWind);
+            // Enhanced line styling with wind direction colors
+            const windColor = effectiveWind > 0 ? 'rgba(120, 180, 220, ' : 'rgba(180, 120, 220, ';
+            ctx.strokeStyle = windColor + alphaValue + ')';
+            ctx.lineWidth = 1.5 + windMagnitude * 2;
+            
+            // Draw main wind trail
             ctx.beginPath();
             ctx.moveTo(startX, startY);
             ctx.lineTo(endX, startY);
             ctx.stroke();
+            
+            // Add arrow-like effect for stronger winds
+            if (windMagnitude > 0.3) {
+                const arrowSize = 3 + windMagnitude * 4;
+                ctx.beginPath();
+                ctx.moveTo(endX, startY);
+                ctx.lineTo(endX - arrowSize * direction, startY - arrowSize/2);
+                ctx.moveTo(endX, startY);
+                ctx.lineTo(endX - arrowSize * direction, startY + arrowSize/2);
+                ctx.stroke();
+            }
         });
     }
     
@@ -416,7 +473,7 @@ class Renderer {
     }
     
     /**
-     * Update the wind indicator arrow
+     * Update the wind indicator arrow with smooth transitions
      * @param {number} windForce - Current wind force
      */
     updateWindIndicator(windForce) {
@@ -426,25 +483,39 @@ class Renderer {
         // Normalize wind to -1 to 1 range
         const normalizedWind = windForce / this.environment.maxWindStrength;
         
-        // Calculate rotation and strength
-        const rotation = normalizedWind < 0 ? 180 : 0; // Flip if negative
-        const strength = Math.abs(normalizedWind);
+        // Calculate target rotation and strength
+        const targetRotation = normalizedWind < 0 ? 180 : 0;
+        const targetStrength = Math.abs(normalizedWind);
+        
+        // Smooth transitions
+        const rotationSpeed = 0.1; // Adjust for desired smoothness
+        const strengthSpeed = 0.05;
+        
+        // Update smooth values
+        const rotationDiff = targetRotation - this.smoothWindRotation;
+        // Handle rotation wrapping (0° and 180° are far apart)
+        if (Math.abs(rotationDiff) > 90) {
+            this.smoothWindRotation += Math.sign(rotationDiff) * 180;
+        }
+        this.smoothWindRotation += (targetRotation - this.smoothWindRotation) * rotationSpeed;
+        this.smoothWindStrength += (targetStrength - this.smoothWindStrength) * strengthSpeed;
         
         // Always show at least a minimal wind indication
         const minStrength = 0.3;
-        const displayStrength = Math.max(minStrength, strength);
+        const displayStrength = Math.max(minStrength, this.smoothWindStrength);
         
-        // Update arrow style - always visible with smooth rotation
-        arrow.style.transform = `rotate(${rotation}deg) scaleX(${displayStrength})`;
-        arrow.style.opacity = 0.7 + strength * 0.3; // Always visible with min 0.7 opacity
+        // Update arrow style with smooth values
+        arrow.style.transform = `rotate(${this.smoothWindRotation}deg) scaleX(${displayStrength})`;
+        arrow.style.opacity = 0.7 + this.smoothWindStrength * 0.3;
     }
     
     /**
      * Render the entire scene
      * @param {Object} state - Current physics state
      * @param {number} windForce - Current wind force
+     * @param {number} episodeNumber - Current episode number
      */
-    render(state, windForce) {
+    render(state, windForce, episodeNumber) {
         try {
             // Safety check for invalid state
             if (!state || typeof state !== 'object') {
@@ -465,12 +536,17 @@ class Renderer {
             // Clear canvas
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
             
-            // Draw scene elements
-            this.drawBackground();
+            // Draw scene elements (pass windForce to background for grass movement)
+            this.drawBackground(safeWindForce);
             this.drawWindStreams(safeWindForce);
             this.drawClouds(safeWindForce);
             this.drawPlatform(state);
             this.drawStick(state);
+            
+            // Draw episode counter
+            if (episodeNumber !== undefined) {
+                this.drawEpisodeCounter(episodeNumber);
+            }
             
             // Update wind indicator
             this.updateWindIndicator(safeWindForce);
@@ -478,7 +554,7 @@ class Renderer {
             console.error("Error in render method:", error);
             // If rendering fails, at least draw the background
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            this.drawBackground();
+            this.drawBackground(0);
         }
     }
 };

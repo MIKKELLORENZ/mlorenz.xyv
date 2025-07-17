@@ -26,6 +26,30 @@ document.addEventListener('DOMContentLoaded', function() {
         },
 
         {
+            id: "craft_note",
+            title: "Craft Note",
+            description: "",
+            thumbnail: "../vibe-code/projects/utilities/craft_note/thumbnail.jpg",
+            category: "utilities",
+            tags: ["sticky notes", "productivity", "javascript", "utilities","note-taking","to-do", "to do"],
+            date: "2025-07-17",
+            path: "projects/utilities/craft_note/index.html",
+            type: "iframe" // Explicitly set to load in iframe
+        },
+
+        {
+            id: "hdr_enhance",
+            title: "HDR Enhance",
+            description: "Enhance your images with simulated High Dynamic Range (HDR) processing.",
+            thumbnail: "../vibe-code/projects/utilities/hdr_enhance/thumbnail.jpg",
+            category: "utilities",
+            tags: ["image processing", "hdr", "javascript"],
+            date: "2025-06-29",
+            path: "projects/utilities/hdr_enhance/index.html",
+            type: "iframe" // Explicitly set to load in iframe
+        },
+
+        {
             id: "random_password_generator",
             title: "Random Password Generator",
             description: "Generate secure random passwords with customizable options.",
@@ -37,18 +61,65 @@ document.addEventListener('DOMContentLoaded', function() {
             type: "iframe" // Explicitly set to load in iframe
         },
 
-        {
-            id: "hdr_enchance",
-            title: "HDR Enhance",
-            description: "Enhance your images with simulated High Dynamic Range (HDR) processing.",
-            thumbnail: "../vibe-code/projects/utilities/hdr_enhance/thumbnail.jpg",
+        // {
+        //     id: "zero_yen_jackpot",
+        //     title: "Zero Yen Jackpot",
+        //     description: "A slot machine game with Japanese aesthetic.",
+        //     thumbnail: "../vibe-code/projects/games/zero_yen_jackpot/gaisha.jpg",
+        //     category: "games",
+        //     tags: ["slot machine", "game", "javascript", "japanese"],
+        //     date: "2025-03-15",
+        //     path: "projects/games/zero_yen_jackpot/index.html",
+        //     type: "iframe"
+        // },
 
-            category: "utilities",
-            tags: ["image processing", "hdr", "javascript"],
-            date: "2025-06-29",
-            path: "projects/utilities/hdr_enhance/index.html",
-            type: "iframe" // Explicitly set to load in iframe
+        // {
+        //     id: "autonomous_dogfight",
+        //     title: "Autonomous Dogfight",
+        //     description: "AI-powered drone combat simulation with reinforcement learning.",
+        //     thumbnail: "../vibe-code/projects/simulations/autonomous_dogfight/style.css",
+        //     category: "simulations",
+        //     tags: ["ai", "reinforcement learning", "drones", "combat"],
+        //     date: "2025-02-20",
+        //     path: "projects/simulations/autonomous_dogfight/index.html",
+        //     type: "iframe"
+        // },
+
+        {
+            id: "stick_balance",
+            title: "Stick Balance",
+            description: "Physics simulation of balancing a stick with reinforcement learning.",
+            thumbnail: "../vibe-code/projects/simulations/stick_balance/thumbnail.jpg",
+            category: "simulations",
+            tags: ["physics", "balance", "reinforcement learning"],
+            date: "2025-01-10",
+            path: "projects/simulations/stick_balance/index.html",
+            type: "iframe"
         },
+
+        // {
+        //     id: "audio_from_spectrogram",
+        //     title: "Audio from Spectrogram",
+        //     description: "Convert spectrograms back to audio using Griffin-Lim algorithm.",
+        //     thumbnail: "../vibe-code/projects/utilities/audio_from_spectrogram/styles.css",
+        //     category: "utilities",
+        //     tags: ["audio", "spectrogram", "signal processing"],
+        //     date: "2024-12-05",
+        //     path: "projects/utilities/audio_from_spectrogram/index.html",
+        //     type: "iframe"
+        // },
+
+        // {
+        //     id: "bayesian_optimization_playground",
+        //     title: "Bayesian Optimization Playground",
+        //     description: "Interactive tool for exploring Bayesian optimization techniques.",
+        //     thumbnail: "../vibe-code/projects/utilities/bayesian_optimization_playground/index.html",
+        //     category: "utilities",
+        //     tags: ["optimization", "bayesian", "machine learning"],
+        //     date: "2024-11-18",
+        //     path: "projects/utilities/bayesian_optimization_playground/index.html",
+        //     type: "iframe"
+        // }
 
 
     ];
@@ -132,7 +203,12 @@ document.addEventListener('DOMContentLoaded', function() {
         displayProjects(projects);
     }
 
-    // Event listeners
+    // Event listeners - Auto-trigger search and filters
+    searchInput.addEventListener('input', applyFilters);
+    categoryFilter.addEventListener('change', applyFilters);
+    sortOptions.addEventListener('change', applyFilters);
+    
+    // Keep the manual apply button as well for explicit filtering
     applyFiltersBtn.addEventListener('click', applyFilters);
     
     // Function to display projects as cards
@@ -220,7 +296,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Create project container with maximum height
             const projectFrame = document.createElement('div');
             projectFrame.style.width = '100%';
-            projectFrame.style.height = 'calc(100vh - 60px)'; // Reduced from 150px to 60px to fit right under navbar
+            projectFrame.style.height = 'calc(100vh - 35px)'; // Reduced to 35px for ultra-thin navbar in interactive mode
             projectFrame.style.border = 'none';
             projectFrame.style.display = 'flex';
             projectFrame.style.flexDirection = 'column';
@@ -326,7 +402,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const canvas = document.createElement('canvas');
         canvas.id = project.canvasId || 'game-canvas'; // Use project's canvas ID or default
         canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight - 60;
+        canvas.height = window.innerHeight - 35; // Reduced to 35px for ultra-thin navbar
         canvas.style.backgroundColor = '#000';
         canvas.style.display = 'block';
         canvas.style.width = '100%';

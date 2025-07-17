@@ -37,19 +37,20 @@ class Environment {
     
     /**
      * Reset the environment to start a new episode
-     * Now implements curriculum learning for smoother progression
+     * Simplified curriculum learning for faster learning
      */
     reset() {
         // Update episode count for curriculum learning
         this.episodeCount++;
         
-        // Make first 300 episodes much easier (was 100)
-        let windScale = this.episodeCount < 20 ? 0.1 : Math.min(1.0, (this.episodeCount-20) / 200 + 0.1);
-        let angleScale = this.episodeCount < 20 ? 0.5 : Math.min(1.0, (this.episodeCount-20) / 100 + 0.5);
+        // Much more aggressive curriculum progression
+        let windScale = this.episodeCount < 50 ? 0.0 : Math.min(1.0, (this.episodeCount-50) / 200);
+        let angleScale = this.episodeCount < 20 ? 0.1 : Math.min(1.0, (this.episodeCount-20) / 100);
+        
         let effectiveWindStrength = this.maxWindStrength * windScale;
         let effectiveAngleVariation = Math.min(
             this.initialAngleVariation,
-            1.0 + (this.initialAngleVariation - 1.0) * angleScale
+            0.5 + (this.initialAngleVariation - 0.5) * angleScale
         );
         
         // Initialize physics state with progressive difficulty
@@ -64,6 +65,11 @@ class Environment {
         this.episodeOver = false;
         this.totalReward = 0;
         this.lastAngle = this.state.stickAngle;
+        
+        // Log curriculum progress occasionally
+        if (this.episodeCount % 20 === 0 && this.episodeCount < 200) {
+            console.log(`Curriculum: Episode ${this.episodeCount}, Wind scale: ${windScale.toFixed(3)}, Angle scale: ${angleScale.toFixed(3)}, Max angle: ${effectiveAngleVariation.toFixed(2)}°`);
+        }
         
         return this.state;
     }
@@ -89,58 +95,49 @@ class Environment {
      * Calculate reward based on current state
      */
     calculateReward() {
-        // Higher rewards for keeping the stick upright
-        const normalizedAngle = Math.abs(this.state.stickAngle) / (Math.PI / 2);
-        // Make angle penalty less steep and less harsh
-        const anglePenalty = Math.pow(normalizedAngle, 1.1) * 3.0;
-        // Penalty for excessive velocity
-        const velocityPenalty = Math.min(1, Math.pow(Math.abs(this.state.platformVel) / 3, 2) * 0.15);
-        // Increase base reward and add small positive per-timestep reward
-        let reward = 2.5 + 0.1;
-        // Progress reward
-        const angleDifference = Math.abs(this.lastAngle) - Math.abs(this.state.stickAngle);
-        const progressReward = angleDifference * this.progressRewardWeight * 2.0;
-        // Stable position reward
-        const positionPenalty = Math.min(1, Math.pow(Math.abs(this.state.platformPos) / 2.5, 2));
-        const stablePositionReward = (1 - positionPenalty) * this.stablePositionRewardWeight;
-        // Bonus for very upright stick
-        const uprightBonus = (Math.abs(this.state.stickAngle) < (Math.PI/36)) ? 1.0 : 0.0; // <5 deg
-        // Penalty for large change in platform velocity (jerk)
-        if (typeof this._lastPlatformVel === 'undefined') this._lastPlatformVel = this.state.platformVel;
-        const platformAccel = Math.abs(this.state.platformVel - this._lastPlatformVel);
-        const accelPenalty = Math.min(0.5, platformAccel * 0.1);
-        this._lastPlatformVel = this.state.platformVel;
-        // Apply penalties and additional rewards
+        const stickAngle = this.state.stickAngle;
+        const platformVel = this.state.platformVel;
+        const platformPos = this.state.platformPos;
+        
+        // If stick has fallen, give large negative reward
+        if (this.physics.hasStickFallen(this.state)) {
+            return -50.0; // Strong negative signal for failure
+        }
+        
+        // Base reward for staying upright (every step)
+        let reward = 2.0; // Increased base reward
+        
+        // Strong bonus for being very upright (within 1 degree)
+        if (Math.abs(stickAngle) < Math.PI/180) {
+            reward += 5.0;
+        }
+        // Good bonus for being reasonably upright (within 5 degrees)
+        else if (Math.abs(stickAngle) < Math.PI/36) {
+            reward += 3.0;
+        }
+        // Moderate bonus for being somewhat upright (within 10 degrees)
+        else if (Math.abs(stickAngle) < Math.PI/18) {
+            reward += 1.0;
+        }
+        
+        // Angle penalty - quadratic to encourage staying very upright
+        const normalizedAngle = Math.abs(stickAngle) / (Math.PI / 4);
+        const anglePenalty = normalizedAngle * normalizedAngle * 3.0;
+        
+        // Small penalty for platform velocity to encourage smooth control
+        const velocityPenalty = Math.min(2.0, Math.abs(platformVel) * 0.2);
+        
+        // Small penalty for being far from center
+        const positionPenalty = Math.min(1.0, Math.abs(platformPos) * 0.2);
+        
+        // Combined reward
         reward -= anglePenalty;
         reward -= velocityPenalty;
-        reward -= accelPenalty;
-        reward += progressReward;
-        reward += stablePositionReward;
-        reward += uprightBonus;
-        // Small penalty for using extreme actions
-        const actionPenalty = Math.pow(Math.abs(this.lastAction), 1.5) * 0.10;
-        reward -= actionPenalty;
-        this.lastAngle = this.state.stickAngle;
-        if (this.physics.hasStickFallen(this.state)) {
-            reward = -6.0;
-        }
-        // Reward normalization (optional, only here)
-        if (this.rewardNormalization) {
-            this.rewardStats.count++;
-            const delta = reward - this.rewardStats.mean;
-            this.rewardStats.mean += delta / this.rewardStats.count;
-            if (this.rewardStats.count > 1) {
-                const delta2 = reward - this.rewardStats.mean;
-                this.rewardStats.std = Math.sqrt(((this.rewardStats.count - 2) * Math.pow(this.rewardStats.std, 2) + delta * delta2) / (this.rewardStats.count - 1));
-            }
-            if (this.rewardStats.std > 1e-6) {
-                reward = (reward - this.rewardStats.mean) / this.rewardStats.std;
-            }
-        }
-        // Debug logging (more details for early episodes)
-        if ((this.debug && this.stepCount % 10 === 0) || this.episodeCount < 5) {
-            console.log(`[Env] Ep${this.episodeCount} Step${this.stepCount} | Reward: ${reward.toFixed(2)} | AnglePenalty: ${anglePenalty.toFixed(2)} | VelPenalty: ${velocityPenalty.toFixed(2)} | AccelPenalty: ${accelPenalty.toFixed(2)} | Progress: ${progressReward.toFixed(2)} | Stable: ${stablePositionReward.toFixed(2)} | UprightBonus: ${uprightBonus.toFixed(2)} | ActionPenalty: ${actionPenalty.toFixed(2)}`);
-        }
+        reward -= positionPenalty;
+        
+        // Store current angle for next time
+        this.lastAngle = stickAngle;
+        
         return reward;
     }
     

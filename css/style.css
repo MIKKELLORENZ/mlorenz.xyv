@@ -146,10 +146,67 @@ body {
     align-items: center;
     gap: 10px;
     width: 100%;
+    padding: 5px 20px; /* Reduced from 15px to 5px for thinner navbar */
+}
+
+.interactive-mode .navbar {
+    height: 35px;
+    min-height: 35px;
+    padding: 0;
+}
+
+.interactive-mode .navbar .container {
+    height: 35px;
+    align-items: center;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    padding: 0 20px;
+}
+
+.interactive-mode .nav-back-button {
+    background: none;
+    border: none;
+    color: #ffffff;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 8px 10px;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    height: 35px;
+}
+
+.interactive-mode .nav-back-button:hover {
+    background-color: var(--bg-secondary);
+}
+
+.interactive-mode .project-title-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 35px;
+}
+
+.interactive-mode .project-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffffff;
+    line-height: 1;
+    margin: 0;
+    padding: 0;
 }
 
 .interactive-mode #theme-toggle {
-    color: #ffffff; /* Always white in interactive mode */
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
 }
 
 /* Hero Section */
@@ -304,19 +361,19 @@ footer {
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 30px;
-    margin: 30px 0;
+    gap: 20px; /* Reduced from 30px to 20px */
+    margin: 20px 0; /* Reduced from 30px to 20px */
 }
 
 /* Category Headers */
 .category-header {
     grid-column: 1 / -1;
-    margin-top: 40px;
-    margin-bottom: 20px;
+    margin-top: 30px; /* Reduced from 40px to 30px */
+    margin-bottom: 15px; /* Reduced from 20px to 15px */
     font-size: 1.8rem;
     color: var(--text-primary);
     border-bottom: 2px solid var(--accent);
-    padding-bottom: 10px;
+    padding-bottom: 8px; /* Reduced from 10px to 8px */
 }
 
 .category-header:first-of-type {
@@ -326,18 +383,18 @@ footer {
 /* Search and Filter */
 .search-container {
     background-color: var(--bg-secondary);
-    padding: 20px;
+    padding: 15px; /* Reduced from 20px to 15px */
     border-radius: 8px;
-    margin-bottom: 30px;
+    margin-bottom: 20px; /* Reduced from 30px to 20px */
     box-shadow: var(--card-shadow);
 }
 
 .search-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 15px;
+    gap: 12px; /* Reduced from 15px to 12px */
     align-items: center;
-    margin-bottom: 15px;
+    margin-bottom: 12px; /* Reduced from 15px to 12px */
 }
 
 .search-input {
@@ -357,14 +414,9 @@ footer {
     color: var(--text-primary);
 }
 
+/* Hide the apply button since search is automatic now */
 .filter-button {
-    padding: 10px 15px;
-    background-color: var(--accent);
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: var(--transition);
+    display: none;
 }
 
 .filter-button:hover {
@@ -412,13 +464,13 @@ footer {
 
 /* Make project containers fill available space */
 .projects-container {
-    min-height: calc(100vh - 60px); /* Match with navbar height */
+    min-height: calc(100vh - 45px); /* Reduced from 60px to 45px to match thinner navbar */
 }
 
 /* Add responsive margin to the main container */
 main.container {
-    margin-top: 30px;
-    margin-bottom: 50px;
+    margin-top: 20px; /* Reduced from 30px to 20px */
+    margin-bottom: 30px; /* Reduced from 50px to 30px */
 }
 
 /* Add these classes to your existing CSS file */
