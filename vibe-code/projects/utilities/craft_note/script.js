@@ -40,6 +40,7 @@ class StickyNotesApp {
         this.colorDropdown = document.getElementById('colorDropdown');
         this.colorPreview = document.getElementById('colorPreview');
         this.undoBtn = document.getElementById('undoBtn');
+        this.downloadBtn = document.getElementById('downloadBtn');
         this.noteModal = document.getElementById('noteModal');
         this.currentEditingNote = null;
     }
@@ -76,7 +77,8 @@ class StickyNotesApp {
         
         document.querySelectorAll('.color-swatch').forEach(swatch => {
             swatch.addEventListener('click', (e) => {
-                this.setDefaultColor(e.target.dataset.color);
+                const color = e.target.dataset.color;
+                this.setDefaultColor(color);
                 this.hideColorDropdown();
             });
         });
@@ -184,6 +186,7 @@ class StickyNotesApp {
         this.saveData();
         this.updateBoardCount();
         this.updateUndoButton();
+        this.updateDownloadButton();
         
         return note;
     }
@@ -226,6 +229,11 @@ class StickyNotesApp {
         noteElement.style.left = `${note.x}px`;
         noteElement.style.top = `${note.y}px`;
         noteElement.style.backgroundColor = note.color;
+        
+        // Add dark-note class for dark colored notes
+        if (note.color === '#2d3436') {
+            noteElement.classList.add('dark-note');
+        }
         
         if (note.done) {
             noteElement.classList.add('done');
@@ -590,6 +598,14 @@ class StickyNotesApp {
             if (note && noteElement) {
                 note.color = color;
                 noteElement.style.backgroundColor = color;
+                
+                // Add or remove dark-note class based on color
+                if (color === '#2d3436') {
+                    noteElement.classList.add('dark-note');
+                } else {
+                    noteElement.classList.remove('dark-note');
+                }
+                
                 this.saveData();
             }
         }
@@ -606,6 +622,7 @@ class StickyNotesApp {
         this.notes = this.notes.filter(n => n.id !== noteId);
         this.saveData();
         this.updateBoardCount();
+        this.updateDownloadButton();
         this.checkDropZoneVisibility();
     }
 
@@ -760,6 +777,7 @@ class StickyNotesApp {
         // Clear undo stack when switching boards
         this.undoStack = [];
         this.updateUndoButton();
+        this.updateDownloadButton();
         
         // Load new board's notes and theme
         this.loadCurrentBoardNotes();
@@ -834,6 +852,7 @@ class StickyNotesApp {
         
         // Render all notes for current board without animation
         this.notes.forEach(note => this.renderNote(note, true));
+        this.updateDownloadButton();
     }
 
     updateBoardSelect() {
@@ -973,9 +992,15 @@ class StickyNotesApp {
 
     clearAll() {
         if (confirm('Are you sure you want to delete all notes on this board?')) {
+            // Save state for undo
+            this.saveStateForUndo();
+            
             this.workspace.querySelectorAll('.sticky-note').forEach(note => note.remove());
             this.notes = [];
             this.saveData();
+            this.updateBoardCount();
+            this.updateUndoButton();
+            this.updateDownloadButton();
             this.checkDropZoneVisibility();
         }
     }
@@ -1061,12 +1086,12 @@ class StickyNotesApp {
         }
         
         this.updateUndoButton();
+        this.updateDownloadButton();
     }
 
     downloadNotes() {
         if (this.notes.length === 0) {
-            alert('No notes to download on this board!');
-            return;
+            return; // Button should be disabled, but just in case
         }
 
         // Sort notes by position (top to bottom, left to right)
@@ -1231,6 +1256,7 @@ class StickyNotesApp {
         this.saveData();
         this.updateBoardCount();
         this.updateUndoButton();
+        this.updateDownloadButton();
         this.checkDropZoneVisibility();
     }
 
@@ -1268,11 +1294,17 @@ class StickyNotesApp {
         this.saveData();
         this.updateBoardCount();
         this.updateUndoButton();
+        this.updateDownloadButton();
         this.checkDropZoneVisibility();
     }
 
     updateUndoButton() {
         this.undoBtn.disabled = this.undoStack.length === 0;
+    }
+
+    updateDownloadButton() {
+        const downloadBtn = document.getElementById('downloadBtn');
+        downloadBtn.disabled = this.notes.length === 0;
     }
 
     // Enhanced color picker functionality
