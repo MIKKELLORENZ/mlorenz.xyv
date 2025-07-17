@@ -61,29 +61,6 @@ document.addEventListener('DOMContentLoaded', function() {
             type: "iframe" // Explicitly set to load in iframe
         },
 
-        // {
-        //     id: "zero_yen_jackpot",
-        //     title: "Zero Yen Jackpot",
-        //     description: "A slot machine game with Japanese aesthetic.",
-        //     thumbnail: "../vibe-code/projects/games/zero_yen_jackpot/gaisha.jpg",
-        //     category: "games",
-        //     tags: ["slot machine", "game", "javascript", "japanese"],
-        //     date: "2025-03-15",
-        //     path: "projects/games/zero_yen_jackpot/index.html",
-        //     type: "iframe"
-        // },
-
-        // {
-        //     id: "autonomous_dogfight",
-        //     title: "Autonomous Dogfight",
-        //     description: "AI-powered drone combat simulation with reinforcement learning.",
-        //     thumbnail: "../vibe-code/projects/simulations/autonomous_dogfight/style.css",
-        //     category: "simulations",
-        //     tags: ["ai", "reinforcement learning", "drones", "combat"],
-        //     date: "2025-02-20",
-        //     path: "projects/simulations/autonomous_dogfight/index.html",
-        //     type: "iframe"
-        // },
 
         {
             id: "stick_balance",
@@ -96,30 +73,6 @@ document.addEventListener('DOMContentLoaded', function() {
             path: "projects/simulations/stick_balance/index.html",
             type: "iframe"
         },
-
-        // {
-        //     id: "audio_from_spectrogram",
-        //     title: "Audio from Spectrogram",
-        //     description: "Convert spectrograms back to audio using Griffin-Lim algorithm.",
-        //     thumbnail: "../vibe-code/projects/utilities/audio_from_spectrogram/styles.css",
-        //     category: "utilities",
-        //     tags: ["audio", "spectrogram", "signal processing"],
-        //     date: "2024-12-05",
-        //     path: "projects/utilities/audio_from_spectrogram/index.html",
-        //     type: "iframe"
-        // },
-
-        // {
-        //     id: "bayesian_optimization_playground",
-        //     title: "Bayesian Optimization Playground",
-        //     description: "Interactive tool for exploring Bayesian optimization techniques.",
-        //     thumbnail: "../vibe-code/projects/utilities/bayesian_optimization_playground/index.html",
-        //     category: "utilities",
-        //     tags: ["optimization", "bayesian", "machine learning"],
-        //     date: "2024-11-18",
-        //     path: "projects/utilities/bayesian_optimization_playground/index.html",
-        //     type: "iframe"
-        // }
 
 
     ];
