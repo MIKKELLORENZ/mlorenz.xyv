@@ -709,6 +709,7 @@ header p {
     margin-top: 30px;
     box-shadow: 0 8px 32px rgba(0,0,0,0.1);
     backdrop-filter: blur(10px);
+    min-height: 700px;
 }
 
 .parameter-heatmap-full h3 {
@@ -736,7 +737,7 @@ header p {
 }
 
 #parameter-heatmap {
-    height: 400px;
+    height: 600px;
     background: white;
     border-radius: 8px;
     margin-top: 10px;
@@ -769,7 +770,7 @@ header p {
 .heatmap-pair {
     display: flex;
     flex-direction: column;
-    min-height: 0;
+    min-height: 260px;
     padding: 15px;
     border: 1px solid #e0e0e0;
     border-radius: 8px;
@@ -830,10 +831,10 @@ header p {
 .heatmap-grid {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
-    gap: 1px;
+    gap: 4px;
     background: #ddd;
     border-radius: 4px;
-    padding: 2px;
+    padding: 6px;
     flex: 1;
     min-height: 0;
 }
