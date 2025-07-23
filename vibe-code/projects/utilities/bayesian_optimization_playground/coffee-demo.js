@@ -16,16 +16,34 @@ class CoffeeDemo {
         this.isApplyingSuggestion = false;
         this.maxBrews = 30;
         this.brewsRemaining = 30;
+        this.hasShownWelcome = false;
+        this.brewedCombinations = new Set(); // Track brewed combinations
         
         // Preload audio for instant playback
         this.coffeeAudio = new Audio('coffee_maker.mp3');
         this.coffeeAudio.preload = 'auto';
         this.coffeeAudio.load();
         
+        // Preload new record sound with better initialization
+        this.newRecordAudio = new Audio('new_record.mp3');
+        this.newRecordAudio.preload = 'auto';
+        this.newRecordAudio.volume = 0.5; // Set volume slightly lower than coffee sound
+        this.newRecordAudio.load();
+        
+        // Add event listeners to track loading status
+        this.newRecordAudio.addEventListener('canplaythrough', () => {
+            console.log('New record audio ready to play');
+        });
+        this.newRecordAudio.addEventListener('error', (e) => {
+            console.log('New record audio loading error:', e);
+        });
+        
         this.initializeElements();
         this.setupEventListeners();
         this.updateDisplay();
         this.updateUncertaintyChart();
+        this.updateBrewCounter(); // Initialize water level and counter
+        this.showWelcomeModal(); // Show welcome modal
     }
 
     initializeElements() {
@@ -50,6 +68,16 @@ class CoffeeDemo {
         this.brewCoffeeBtn = document.getElementById('brew-coffee');
         this.brewsRemainingDisplay = document.getElementById('brews-remaining');
         this.counterFill = document.getElementById('counter-fill');
+        this.waterLevel = document.getElementById('water-level');
+        
+        // Modal elements
+        this.welcomeModal = document.getElementById('welcome-modal');
+        this.resultsModal = document.getElementById('results-modal');
+        this.acquisitionInfoModal = document.getElementById('acquisition-info-modal');
+        this.startBrewingBtn = document.getElementById('start-brewing');
+        this.tryAgainBtn = document.getElementById('try-again');
+        this.backToMenuBtn = document.getElementById('back-to-menu');
+        
         this.sliders = [this.pressureSlider, this.grindSlider, this.temperatureSlider, this.coffeeAmountSlider];
     }
 
@@ -65,6 +93,32 @@ class CoffeeDemo {
 
         this.brewCoffeeBtn.addEventListener('click', () => this.brewCoffee());
         
+        // Modal event listeners
+        if (this.startBrewingBtn) {
+            this.startBrewingBtn.addEventListener('click', () => this.hideWelcomeModal());
+        }
+        if (this.tryAgainBtn) {
+            this.tryAgainBtn.addEventListener('click', () => this.resetGame());
+        }
+        if (this.backToMenuBtn) {
+            this.backToMenuBtn.addEventListener('click', () => this.backToMainMenu());
+        }
+        
+        // Acquisition info modal event listeners
+        const infoIcon = document.getElementById('info-icon');
+        if (infoIcon) {
+            infoIcon.addEventListener('click', () => this.showAcquisitionInfoModal());
+        }
+        
+        // Close acquisition info modal when clicking outside or close button
+        if (this.acquisitionInfoModal) {
+            this.acquisitionInfoModal.addEventListener('click', (e) => {
+                if (e.target === this.acquisitionInfoModal || e.target.classList.contains('close-btn')) {
+                    this.hideAcquisitionInfoModal();
+                }
+            });
+        }
+        
         // Add event listeners for acquisition function radio buttons
         const acquisitionRadios = document.querySelectorAll('input[name="acquisition"]');
         acquisitionRadios.forEach(radio => {
@@ -77,6 +131,9 @@ class CoffeeDemo {
         
         // Initialize currentParams from slider values on startup
         this.syncParamsFromSliders();
+        
+        // Add keyboard shortcuts for better UX
+        this.setupKeyboardShortcuts();
     }
     
     // Sync currentParams from slider positions (used on initialization)
@@ -85,6 +142,35 @@ class CoffeeDemo {
         if (this.grindSlider) this.currentParams[1] = parseFloat(this.grindSlider.value);
         if (this.temperatureSlider) this.currentParams[2] = parseFloat(this.temperatureSlider.value);
         if (this.coffeeAmountSlider) this.currentParams[3] = parseFloat(this.coffeeAmountSlider.value);
+    }
+
+    // Add keyboard shortcuts for enhanced UX
+    setupKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            // Only activate when coffee demo is visible
+            if (!document.getElementById('coffee-demo').classList.contains('active')) return;
+            
+            // Space or Enter to brew coffee
+            if ((e.code === 'Space' || e.code === 'Enter') && !this.brewCoffeeBtn.disabled) {
+                e.preventDefault();
+                this.brewCoffee();
+            }
+            
+            // Escape to close modals
+            if (e.code === 'Escape') {
+                this.hideWelcomeModal();
+                this.hideResultsModal();
+                this.hideAcquisitionInfoModal();
+            }
+            
+            // 'R' for recommendation (when available)
+            if (e.code === 'KeyR' && this.currentSuggestion && this.history.length > 0) {
+                const applyBtn = document.querySelector('.suggestion-btn.apply');
+                if (applyBtn && !applyBtn.disabled) {
+                    this.applySuggestion(this.currentSuggestion);
+                }
+            }
+        });
     }
 
     // True function we're trying to optimize (hidden from user)
@@ -199,11 +285,51 @@ class CoffeeDemo {
             
             if (matchingBrew && this.currentScoreDisplay) {
                 this.currentScoreDisplay.textContent = matchingBrew.score.toFixed(2);
-                const scoreColor = matchingBrew.score > 8 ? '#4CAF50' : matchingBrew.score > 6 ? '#FF9800' : '#f44336';
+                // Create smooth gradient based on score: 10.0 (green) → 7.0 (yellow) → 4.0 (red), <4.0 stays red
+                let r, g, b;
+                const score = matchingBrew.score;
+                
+                if (score <= 4.0) {
+                    // Everything 4.0 and below is red (#E15241)
+                    r = 225;
+                    g = 82;
+                    b = 65;
+                } else if (score <= 7.0) {
+                    // Interpolate between red (#E15241) and yellow (#F19D37) for scores 4-7
+                    const t = (score - 4.0) / 3.0; // 0 to 1
+                    r = Math.round(225 + (241 - 225) * t); // 225 → 241
+                    g = Math.round(82 + (157 - 82) * t);   // 82 → 157
+                    b = Math.round(65 + (55 - 65) * t);    // 65 → 55
+                } else {
+                    // Interpolate between yellow (#F19D37) and green (#67AD5B) for scores 7-10
+                    const t = (score - 7.0) / 3.0; // 0 to 1
+                    r = Math.round(241 + (103 - 241) * t); // 241 → 103
+                    g = Math.round(157 + (173 - 157) * t); // 157 → 173
+                    b = Math.round(55 + (91 - 55) * t);    // 55 → 91
+                }
+                
+                const scoreColor = `rgb(${r}, ${g}, ${b})`;
                 this.currentScoreDisplay.style.color = scoreColor;
             } else if (this.currentScoreDisplay) {
                 this.currentScoreDisplay.textContent = '?';
                 this.currentScoreDisplay.style.color = '#999';
+            }
+        }
+        
+        // Check if current combination has been brewed and update brew button
+        if (this.brewCoffeeBtn) {
+            const isBrewed = this.isCombinationBrewed();
+            const btnText = this.brewCoffeeBtn.querySelector('.btn-text');
+            
+            if (this.brewsRemaining <= 0) {
+                this.brewCoffeeBtn.disabled = true;
+                btnText.textContent = 'Game Over!';
+            } else if (isBrewed) {
+                this.brewCoffeeBtn.disabled = true;
+                btnText.textContent = 'Already Brewed';
+            } else {
+                this.brewCoffeeBtn.disabled = false;
+                btnText.textContent = 'Brew Coffee';
             }
         }
         
@@ -455,6 +581,23 @@ class CoffeeDemo {
             }
         }
         
+        // Update water level based on brews remaining
+        if (this.waterLevel) {
+            const waterPercentage = (this.brewsRemaining / this.maxBrews) * 80; // 80% max height
+            this.waterLevel.style.height = `${waterPercentage}%`;
+            
+            // Keep water blue regardless of amount left
+            this.waterLevel.style.background = 'linear-gradient(180deg, rgba(135, 206, 235, 0.9) 0%, rgba(70, 130, 180, 1) 50%, rgba(25, 100, 160, 1) 100%)';
+        }
+        
+        // Update page title with progress for better UX
+        const progress = Math.round(((this.maxBrews - this.brewsRemaining) / this.maxBrews) * 100);
+        if (this.brewsRemaining < this.maxBrews) {
+            document.title = `☕ ${progress}% Complete - Bayesian Optimization Playground`;
+        } else {
+            document.title = 'Bayesian Optimization Playground';
+        }
+        
         // Disable brewing if no brews left
         if (this.brewsRemaining <= 0 && this.brewCoffeeBtn) {
             this.brewCoffeeBtn.disabled = true;
@@ -463,24 +606,20 @@ class CoffeeDemo {
     }
 
     updateAcquisitionRecommendation() {
-        // Clear all indicators first
-        const indicators = ['ei-indicator', 'ucb-indicator', 'pi-indicator'];
-        indicators.forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.classList.remove('recommended');
-                element.textContent = '';
-            }
+        // Clear all previous recommendations
+        const radioOptions = document.querySelectorAll('.radio-option');
+        radioOptions.forEach(option => {
+            option.classList.remove('recommended');
         });
 
         if (this.history.length === 0) return;
 
         let recommendedFunction = this.getRecommendedAcquisitionFunction();
-        const indicator = document.getElementById(`${recommendedFunction.toLowerCase()}-indicator`);
         
-        if (indicator) {
-            indicator.classList.add('recommended');
-            indicator.textContent = '★ Recommended';
+        // Find the corresponding radio option and add pulsating effect
+        const recommendedOption = document.getElementById(`${recommendedFunction.toLowerCase()}-option`);
+        if (recommendedOption) {
+            recommendedOption.classList.add('recommended');
         }
     }
 
@@ -646,9 +785,42 @@ class CoffeeDemo {
             return;
         }
         
+        const previousBestScore = this.bestBrew ? this.bestBrew.score : 0;
+        
         this.bestBrew = this.history.reduce((best, current) => 
             current.score > best.score ? current : best
         );
+        
+        // Debug logging
+        console.log('updateBestBrew called:', { 
+            historyLength: this.history.length, 
+            previousBestScore, 
+            currentBestScore: this.bestBrew.score,
+            isNewRecord: this.bestBrew.score > previousBestScore && this.history.length >= 2
+        });
+        
+        // Check if this is a new record and play sound
+        const currentBestScore = this.bestBrew.score;
+        if (currentBestScore > previousBestScore && this.history.length >= 2) {
+            // Play new record sound with better error handling
+            console.log('New record achieved! Playing sound...', { previousBestScore, currentBestScore });
+            try {
+                this.newRecordAudio.currentTime = 0;
+                const playPromise = this.newRecordAudio.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(e => {
+                        console.log('New record audio failed to play:', e);
+                        // Try to load and play again
+                        this.newRecordAudio.load();
+                        setTimeout(() => {
+                            this.newRecordAudio.play().catch(err => console.log('Retry failed:', err));
+                        }, 100);
+                    });
+                }
+            } catch (e) {
+                console.log('New record audio error:', e);
+            }
+        }
         
         this.bestScoreDisplay.textContent = this.bestBrew.score.toFixed(2);
         this.bestParamsDisplay.innerHTML = `
@@ -671,6 +843,14 @@ class CoffeeDemo {
     brewCoffee() {
         // Debug: Log current parameters to console
         console.log('Brewing with parameters:', this.currentParams);
+        
+        // Prevent brewing the same combination twice
+        if (this.isCombinationBrewed()) {
+            return; // Button should already be disabled, but just in case
+        }
+        
+        // Add current combination to brewed set
+        this.brewedCombinations.add(this.getCombinationKey());
         
         // Play preloaded coffee maker sound immediately
         this.coffeeAudio.currentTime = 0; // Reset to beginning
@@ -701,15 +881,21 @@ class CoffeeDemo {
             // Stop brewing animation
             this.stopBrewingAnimation();
             
-            // Re-enable button and hide spinner
-            this.brewCoffeeBtn.disabled = false;
+            // Re-enable button and hide spinner (will be updated by updateDisplay)
             spinner.classList.remove('active');
-            btnText.textContent = 'Brew Coffee';
             
             this.updateBestBrew();
             // Generate recommendation but do NOT auto-apply it
             this.getRecommendation();
             this.updateDisplay(); // Force display update to show the new score
+            
+            // Check if game is over
+            if (this.brewsRemaining <= 0) {
+                // Wait a bit for animations to finish, then show results
+                setTimeout(() => {
+                    this.showResultsModal();
+                }, 1500);
+            }
         }, 2000);
     }
     
@@ -739,17 +925,17 @@ class CoffeeDemo {
             if (waterFlow) waterFlow.classList.add('active');
         }, 200);
         
-        // Start coffee stream after 400ms
+        // Start coffee stream after 900ms (500ms delay + original 400ms)
         setTimeout(() => {
             if (coffeeStream) coffeeStream.classList.add('active');
-        }, 400);
+        }, 900);
         
-        // Fill cup after 600ms
+        // Fill cup after 1100ms (500ms delay + original 600ms)
         setTimeout(() => {
             if (coffeeInCup) {
                 coffeeInCup.classList.add('filling');
             }
-        }, 600);
+        }, 1100);
         
         // Start steam from cup after 800ms
         setTimeout(() => {
@@ -860,15 +1046,31 @@ class CoffeeDemo {
                     
                     if (nearbyBrews.length > 0) {
                         const avgScore = nearbyBrews.reduce((sum, brew) => sum + brew.score, 0) / nearbyBrews.length;
-                        const intensity = Math.min(1, avgScore / 10);
                         
-                        if (avgScore > 7) {
-                            color = `rgba(76, 175, 80, ${intensity})`;
-                        } else if (avgScore > 5) {
-                            color = `rgba(255, 152, 0, ${intensity})`;
+                        // Create smooth gradient based on score: 10.0 (green) → 7.0 (yellow) → 4.0 (red), <4.0 stays red
+                        let r, g, b;
+                        
+                        if (avgScore <= 4.0) {
+                            // Everything 4.0 and below is red (#E15241)
+                            r = 225;
+                            g = 82;
+                            b = 65;
+                        } else if (avgScore <= 7.0) {
+                            // Interpolate between red (#E15241) and yellow (#F19D37) for scores 4-7
+                            const t = (avgScore - 4.0) / 3.0; // 0 to 1
+                            r = Math.round(225 + (241 - 225) * t); // 225 → 241
+                            g = Math.round(82 + (157 - 82) * t);   // 82 → 157
+                            b = Math.round(65 + (55 - 65) * t);    // 65 → 55
                         } else {
-                            color = `rgba(244, 67, 54, ${intensity})`;
+                            // Interpolate between yellow (#F19D37) and green (#67AD5B) for scores 7-10
+                            const t = (avgScore - 7.0) / 3.0; // 0 to 1
+                            r = Math.round(241 + (103 - 241) * t); // 241 → 103
+                            g = Math.round(157 + (173 - 157) * t); // 157 → 173
+                            b = Math.round(55 + (91 - 55) * t);    // 55 → 91
                         }
+                        
+                        const intensity = Math.min(1, 0.4 + (Math.min(avgScore, 10) / 10) * 0.6); // 0.4 to 1.0 alpha
+                        color = `rgba(${r}, ${g}, ${b}, ${intensity})`;
                         
                         title = `${paramNames[param1]}: ${p1Value.toFixed(1)}${paramUnits[param1]}, ${paramNames[param2]}: ${p2Value.toFixed(1)}${paramUnits[param2]} - Avg: ${avgScore.toFixed(2)} (${nearbyBrews.length} brews)`;
                     }
@@ -937,7 +1139,30 @@ class CoffeeDemo {
             const x = (index / (this.history.length - 1 || 1)) * 90 + 5; // 5-95% of width
             const y = 90 - ((brew.score - minScore) / scoreRange) * 80; // 10-90% of height, inverted
             
-            const color = brew.score > 8 ? '#4CAF50' : brew.score > 6 ? '#FF9800' : '#f44336';
+            // Create smooth gradient based on score: 10.0 (green) → 7.0 (yellow) → 4.0 (red), <4.0 stays red
+            let r, g, b;
+            const score = brew.score;
+            
+            if (score <= 4.0) {
+                // Everything 4.0 and below is red (#E15241)
+                r = 225;
+                g = 82;
+                b = 65;
+            } else if (score <= 7.0) {
+                // Interpolate between red (#E15241) and yellow (#F19D37) for scores 4-7
+                const t = (score - 4.0) / 3.0; // 0 to 1
+                r = Math.round(225 + (241 - 225) * t); // 225 → 241
+                g = Math.round(82 + (157 - 82) * t);   // 82 → 157
+                b = Math.round(65 + (55 - 65) * t);    // 65 → 55
+            } else {
+                // Interpolate between yellow (#F19D37) and green (#67AD5B) for scores 7-10
+                const t = (score - 7.0) / 3.0; // 0 to 1
+                r = Math.round(241 + (103 - 241) * t); // 241 → 103
+                g = Math.round(157 + (173 - 157) * t); // 157 → 173
+                b = Math.round(55 + (91 - 55) * t);    // 55 → 91
+            }
+            
+            const color = `rgb(${r}, ${g}, ${b})`;
             
             // Create detailed tooltip with all parameters
             const tooltip = `Brew ${index + 1}: Score ${brew.score.toFixed(2)}
@@ -969,5 +1194,154 @@ Amount: ${brew.params[3].toFixed(1)}g`;
         `;
         
         this.historyScatter.innerHTML = scatterHTML;
+    }
+    
+    // Modal Methods
+    showWelcomeModal() {
+        if (this.welcomeModal && !this.hasShownWelcome) {
+            this.welcomeModal.classList.add('active');
+            this.hasShownWelcome = true;
+        }
+    }
+
+    hideWelcomeModal() {
+        if (this.welcomeModal) {
+            this.welcomeModal.classList.remove('active');
+        }
+    }
+
+    showResultsModal() {
+        if (this.resultsModal && this.bestBrew) {
+            // Update final results
+            const finalBestParams = document.getElementById('final-best-params');
+            const finalBestScore = document.getElementById('final-best-score');
+            const totalBrews = document.getElementById('total-brews');
+            const averageScore = document.getElementById('average-score');
+            const scoreImprovement = document.getElementById('score-improvement');
+
+            if (finalBestParams) {
+                finalBestParams.innerHTML = `
+                    <div class="final-param">
+                        <strong>Pressure:</strong> ${this.bestBrew.params[0].toFixed(1)} PSI
+                    </div>
+                    <div class="final-param">
+                        <strong>Grind Size:</strong> ${this.bestBrew.params[1].toFixed(1)}
+                    </div>
+                    <div class="final-param">
+                        <strong>Temperature:</strong> ${this.bestBrew.params[2].toFixed(1)}°C
+                    </div>
+                    <div class="final-param">
+                        <strong>Coffee Amount:</strong> ${this.bestBrew.params[3].toFixed(1)}g
+                    </div>
+                `;
+            }
+
+            if (finalBestScore) {
+                finalBestScore.textContent = this.bestBrew.score.toFixed(2);
+            }
+
+            if (totalBrews) {
+                totalBrews.textContent = this.history.length;
+            }
+
+            if (averageScore) {
+                const avg = this.history.reduce((sum, brew) => sum + brew.score, 0) / this.history.length;
+                averageScore.textContent = avg.toFixed(2);
+            }
+
+            if (scoreImprovement && this.history.length > 0) {
+                const firstScore = this.history[0].score;
+                const improvement = this.bestBrew.score - firstScore;
+                scoreImprovement.textContent = improvement >= 0 ? `+${improvement.toFixed(2)}` : improvement.toFixed(2);
+                scoreImprovement.style.color = improvement >= 0 ? '#67AD5B' : '#E15241';
+            }
+
+            this.resultsModal.classList.add('active');
+        }
+    }
+
+    hideResultsModal() {
+        if (this.resultsModal) {
+            this.resultsModal.classList.remove('active');
+        }
+    }
+
+    showAcquisitionInfoModal() {
+        if (this.acquisitionInfoModal) {
+            this.acquisitionInfoModal.classList.add('active');
+        }
+    }
+
+    hideAcquisitionInfoModal() {
+        if (this.acquisitionInfoModal) {
+            this.acquisitionInfoModal.classList.remove('active');
+        }
+    }
+
+    resetGame() {
+        this.hideResultsModal();
+        
+        // Reset all game state
+        this.history = [];
+        this.bestBrew = null;
+        this.brewsRemaining = 30;
+        this.brewedCombinations.clear();
+        this.optimizer = new BayesianOptimizer();
+        
+        // Reset parameters to default values
+        this.currentParams = [9, 5, 93, 18];
+        
+        // Reset UI
+        this.updateDisplay();
+        this.updateUncertaintyChart();
+        this.updateBrewCounter();
+        this.updateBestBrew();
+        
+        // Re-enable brew button
+        if (this.brewCoffeeBtn) {
+            this.brewCoffeeBtn.disabled = false;
+            this.brewCoffeeBtn.querySelector('.btn-text').textContent = 'Brew Coffee';
+        }
+    }
+
+    backToMainMenu() {
+        this.hideResultsModal();
+        
+        // Reset page title
+        document.title = 'Bayesian Optimization Playground';
+        
+        // Reset all demo parameters when returning to menu
+        this.history = [];
+        this.bestBrew = null;
+        this.brewsRemaining = 30;
+        this.brewedCombinations.clear();
+        this.optimizer = new BayesianOptimizer();
+        this.currentParams = [9, 5, 93, 18];
+        
+        // Reset UI
+        this.updateDisplay();
+        this.updateUncertaintyChart();
+        this.updateBrewCounter();
+        this.updateBestBrew();
+        
+        // Re-enable brew button
+        if (this.brewCoffeeBtn) {
+            this.brewCoffeeBtn.disabled = false;
+            this.brewCoffeeBtn.querySelector('.btn-text').textContent = 'Brew Coffee';
+        }
+        
+        if (typeof app !== 'undefined' && app.showSection) {
+            app.showSection('main-menu');
+        }
+    }
+
+    // Generate combination key for tracking brewed combinations
+    getCombinationKey() {
+        return this.currentParams.map(param => Math.round(param * 10) / 10).join(',');
+    }
+
+    // Check if current combination has been brewed
+    isCombinationBrewed() {
+        return this.brewedCombinations.has(this.getCombinationKey());
     }
 }

@@ -121,7 +121,6 @@ class BayesianOptimizer {
 class BayesianOptimizationApp {
     constructor() {
         this.coffeeDemo = null;
-        this.customProblemManager = null;
         this.educationManager = null;
         this.initializeNavigation();
         this.showSection('main-menu');
@@ -151,8 +150,6 @@ class BayesianOptimizationApp {
         // Initialize section-specific functionality
         if (sectionId === 'coffee-demo' && !this.coffeeDemo) {
             this.coffeeDemo = new CoffeeDemo();
-        } else if (sectionId === 'custom-problem' && !this.customProblemManager) {
-            this.customProblemManager = new CustomProblemManager();
         } else if (sectionId === 'learn' && !this.educationManager) {
             this.educationManager = new BayesianEducationManager();
             window.educationManager = this.educationManager;
@@ -163,8 +160,17 @@ class BayesianOptimizationApp {
 
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+    // Add a subtle fade-in effect for smooth loading
+    document.body.style.opacity = '0';
+    document.body.style.transition = 'opacity 0.3s ease-in-out';
+    
+    // Initialize app
     window.app = new BayesianOptimizationApp();
     window.coffeeDemo = window.app.coffeeDemo;
-    window.customProblemManager = window.app.customProblemManager;
     window.educationManager = window.app.educationManager;
+    
+    // Smooth fade-in
+    requestAnimationFrame(() => {
+        document.body.style.opacity = '1';
+    });
 });

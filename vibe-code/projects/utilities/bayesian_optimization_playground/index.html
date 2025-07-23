@@ -21,11 +21,6 @@
                     <h3>Coffee Demo</h3>
                     <p>Optimize espresso machine settings using Bayesian optimization to find the perfect brew</p>
                 </div>
-                <div class="card" onclick="app.showSection('custom-problem')">
-                    <div class="card-icon">🔧</div>
-                    <h3>Custom Problem</h3>
-                    <p>Create and solve your own optimization problems with custom parameters and objectives</p>
-                </div>
                 <div class="card" onclick="app.showSection('learn')">
                     <div class="card-icon">📚</div>
                     <h3>What is Bayesian Optimization?</h3>
@@ -44,6 +39,16 @@
             <h2>Espresso Machine Optimization</h2>
             <div class="demo-container">
                 <div class="coffee-machine">
+                    <div class="brew-counter-top">
+                        <div class="counter-label">Brews Remaining</div>
+                        <div class="counter-display">
+                            <span class="counter-number" id="brews-remaining">30</span>
+                            <div class="counter-bar">
+                                <div class="counter-fill" id="counter-fill"></div>
+                            </div>
+                        </div>
+                        
+                    </div>
                     <div class="machine-visual">
                         <div class="machine-body">
                             <div class="water-tank">
@@ -76,6 +81,10 @@
                                 <div class="power-light" id="power-light"></div>
                                 <div class="brewing-light" id="brewing-light"></div>
                             </div>
+                            <div class="drip-tray">
+                                <div class="tray-surface"></div>
+                                <div class="tray-grate"></div>
+                            </div>
                         </div>
                     </div>
                     <div class="controls">
@@ -96,18 +105,9 @@
                             <input type="range" id="coffee-amount" min="14" max="22" value="18" step="0.5">
                         </div>
                         <div class="brewing-controls">
-                            <div class="brew-counter">
-                                <div class="counter-label">Brews Remaining</div>
-                                <div class="counter-display">
-                                    <span class="counter-number" id="brews-remaining">30</span>
-                                    <div class="counter-bar">
-                                        <div class="counter-fill" id="counter-fill"></div>
-                                    </div>
-                                </div>
-                                <div class="counter-hint">Find the perfect brew in 30 tries!</div>
-                            </div>
                             <button id="brew-coffee" class="brew-btn">
                                 <span class="btn-text">Brew Coffee</span>
+                                <span class="keyboard-hint">(Space)</span>
                                 <span class="btn-spinner" id="brew-spinner"></span>
                             </button>
                         </div>
@@ -138,7 +138,7 @@
                     <div class="recommendations">
                         <h3>Bayesian Optimization Suggestions</h3>
                         <div class="acquisition-selector">
-                            <label>Acquisition Function:</label>
+                            <label>Acquisition Function: <span class="info-icon" id="acquisition-info-btn" title="Learn about acquisition functions">?</span></label>
                             <div class="radio-group-vertical">
                                 <label class="radio-option" id="ei-option" title="Expected Improvement: Balances exploration and exploitation by considering both mean prediction and uncertainty. Good for general optimization.">
                                     <input type="radio" name="acquisition" value="EI" checked>
@@ -186,66 +186,6 @@
             </div>
         </section>
 
-        <!-- Custom Problem Section -->
-        <section id="custom-problem" class="section">
-            <h2>Create Custom Optimization Problem</h2>
-            <div class="custom-container">
-                <div class="project-selector">
-                    <h3>Select Project</h3>
-                    <select id="project-list">
-                        <option value="">Create New Project</option>
-                    </select>
-                    <button id="new-project-btn">New Project</button>
-                    <button id="load-project-btn">Load Project</button>
-                    <button id="delete-project-btn">Delete Project</button>
-                </div>
-
-                <div class="project-setup" id="project-setup">
-                    <h3>Project Setup</h3>
-                    <div class="setup-form">
-                        <div class="form-group">
-                            <label for="project-name">Project Name:</label>
-                            <input type="text" id="project-name" placeholder="Enter project name">
-                        </div>
-                        <div class="form-group">
-                            <label for="objective-name">Objective to Optimize:</label>
-                            <input type="text" id="objective-name" placeholder="e.g., Conversion Rate, Efficiency, Score">
-                        </div>
-                        <div class="form-group">
-                            <label for="optimization-direction">Optimization Direction:</label>
-                            <select id="optimization-direction">
-                                <option value="maximize">Maximize</option>
-                                <option value="minimize">Minimize</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="parameters-section">
-                        <h4>Parameters</h4>
-                        <div id="parameters-list"></div>
-                        <button id="add-parameter">Add Parameter</button>
-                    </div>
-
-                    <button id="save-project">Save Project</button>
-                </div>
-
-                <div class="data-entry" id="data-entry" style="display: none;">
-                    <h3>Data Entry</h3>
-                    <div class="entry-form" id="entry-form">
-                        <!-- Dynamic form will be generated here -->
-                    </div>
-                    <button id="add-data-point">Add Data Point</button>
-                    <button id="get-optimization-suggestion">Get Optimization Suggestion</button>
-                </div>
-
-                <div class="results-display" id="results-display">
-                    <h3>Results</h3>
-                    <div id="optimization-results"></div>
-                    <div id="data-visualization"></div>
-                </div>
-            </div>
-        </section>
-
         <!-- Learn Section -->
         <section id="learn" class="section">
             <h2>What is Bayesian Optimization?</h2>
@@ -256,9 +196,146 @@
         </section>
     </div>
 
+    <!-- Welcome Modal -->
+    <div id="welcome-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🌟 Welcome to Bayesian Optimization Coffee Lab! ☕</h2>
+            </div>
+            <div class="modal-body">
+                <p><strong>Your Mission:</strong> Find the perfect espresso recipe using advanced optimization techniques!</p>
+                
+                <div class="tutorial-section">
+                    <h3>🎯 How It Works:</h3>
+                    <ul>
+                        <li><strong>Adjust Parameters:</strong> Tweak pressure, grind size, temperature, and coffee amount</li>
+                        <li><strong>Brew & Score:</strong> Each cup gets a taste score from 0-10</li>
+                        <li><strong>Get Smart Suggestions:</strong> The system suggests optimal settings based on your results</li>
+                        <li><strong>Optimize Efficiently:</strong> Find the best coffee in just 30 attempts!</li>
+                    </ul>
+                </div>
+                
+                <div class="tutorial-section">
+                    <h3>🧠 Bayesian Optimization Magic:</h3>
+                    <p>Unlike random trial-and-error, this system learns from each brew to intelligently guide you toward the perfect cup. Watch as it balances <em>exploration</em> (trying new combinations) with <em>exploitation</em> (refining promising areas).</p>
+                </div>
+                
+                <div class="tutorial-section">
+                    <h3>💡 Pro Tips:</h3>
+                    <ul>
+                        <li>Start with a few diverse attempts to give the system data to work with</li>
+                        <li>Pay attention to the acquisition function recommendations</li>
+                        <li>Use the "Apply Recommendation" button to let the algorithm guide you</li>
+                        <li>Watch the uncertainty bands shrink as you gather more data</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="start-brewing" class="modal-btn primary">Start Brewing! ☕</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Modal -->
+    <div id="results-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🏆 Optimization Complete! 🎉</h2>
+            </div>
+            <div class="modal-body">
+                <div class="results-summary">
+                    <h3>Your Best Coffee Recipe:</h3>
+                    <div id="final-best-params" class="final-params"></div>
+                    <div class="score-highlight">
+                        <span>Final Score: </span>
+                        <span id="final-best-score" class="final-score">0.00</span>
+                        <span>/10.00</span>
+                    </div>
+                </div>
+                
+                <div class="optimization-stats">
+                    <h3>📊 Optimization Journey:</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-label">Total Brews:</span>
+                            <span id="total-brews" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Average Score:</span>
+                            <span id="average-score" class="stat-value">0.00</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Improvement:</span>
+                            <span id="score-improvement" class="stat-value">+0.00</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="congratulations">
+                    <p>🎊 Congratulations! You've successfully used Bayesian optimization to find an excellent espresso recipe. The algorithm learned from each of your attempts to guide you toward this optimal combination.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="try-again" class="modal-btn secondary">Try Again</button>
+                <button id="back-to-menu" class="modal-btn primary">Back to Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acquisition Function Info Modal -->
+    <div id="acquisition-info-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📊 Acquisition Functions Explained</h2>
+            </div>
+            <div class="modal-body">
+                <div class="acquisition-function-info">
+                    <div class="function-info-card">
+                        <h3>🎯 EI (Expected Improvement)</h3>
+                        <p><strong>Best for:</strong> Balanced exploration and exploitation</p>
+                        <p>EI considers both the predicted quality and uncertainty. It suggests points that are likely to improve upon your current best result while also exploring uncertain areas.</p>
+                        <div class="use-case">
+                            <strong>Use when:</strong> You want a good balance between trying new areas and refining promising ones.
+                        </div>
+                    </div>
+                    
+                    <div class="function-info-card">
+                        <h3>🔍 UCB (Upper Confidence Bound)</h3>
+                        <p><strong>Best for:</strong> Exploration and discovery</p>
+                        <p>UCB is optimistic and focuses on areas with high uncertainty. It's more likely to suggest unexplored parameter combinations to help you discover new promising regions.</p>
+                        <div class="use-case">
+                            <strong>Use when:</strong> You're early in the process and want to explore different parameter combinations.
+                        </div>
+                    </div>
+                    
+                    <div class="function-info-card">
+                        <h3>🎲 PI (Probability of Improvement)</h3>
+                        <p><strong>Best for:</strong> Conservative optimization</p>
+                        <p>PI focuses on points that are most likely to be better than your current best, even if only slightly. It's more conservative and refines known good areas.</p>
+                        <div class="use-case">
+                            <strong>Use when:</strong> You're close to finding the optimum and want to fine-tune your results.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="acquisition-strategy">
+                    <h3>💡 Smart Strategy</h3>
+                    <p>The system automatically recommends the best acquisition function based on your progress:</p>
+                    <ul>
+                        <li><strong>Early phase:</strong> UCB for exploration</li>
+                        <li><strong>Middle phase:</strong> EI for balanced approach</li>
+                        <li><strong>Late phase:</strong> PI for exploitation</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="close-acquisition-info" class="modal-btn primary">Got it!</button>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
     <script src="coffee-demo.js"></script>
-    <script src="custom-problem.js"></script>
     <script src="bayesian-education.js"></script>
 </body>
 </html>
