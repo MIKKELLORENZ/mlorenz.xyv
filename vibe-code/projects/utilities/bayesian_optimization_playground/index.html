@@ -96,6 +96,16 @@
                             <input type="range" id="coffee-amount" min="14" max="22" value="18" step="0.5">
                         </div>
                         <div class="brewing-controls">
+                            <div class="brew-counter">
+                                <div class="counter-label">Brews Remaining</div>
+                                <div class="counter-display">
+                                    <span class="counter-number" id="brews-remaining">30</span>
+                                    <div class="counter-bar">
+                                        <div class="counter-fill" id="counter-fill"></div>
+                                    </div>
+                                </div>
+                                <div class="counter-hint">Find the perfect brew in 30 tries!</div>
+                            </div>
                             <button id="brew-coffee" class="brew-btn">
                                 <span class="btn-text">Brew Coffee</span>
                                 <span class="btn-spinner" id="brew-spinner"></span>
@@ -127,6 +137,26 @@
                     
                     <div class="recommendations">
                         <h3>Bayesian Optimization Suggestions</h3>
+                        <div class="acquisition-selector">
+                            <label>Acquisition Function:</label>
+                            <div class="radio-group-vertical">
+                                <label class="radio-option" id="ei-option" title="Expected Improvement: Balances exploration and exploitation by considering both mean prediction and uncertainty. Good for general optimization.">
+                                    <input type="radio" name="acquisition" value="EI" checked>
+                                    <span>EI (Expected Improvement)</span>
+                                    <div class="recommendation-indicator" id="ei-indicator"></div>
+                                </label>
+                                <label class="radio-option" id="ucb-option" title="Upper Confidence Bound: More explorative, focuses on uncertain areas. Good for early exploration phases.">
+                                    <input type="radio" name="acquisition" value="UCB">
+                                    <span>UCB (Upper Confidence Bound)</span>
+                                    <div class="recommendation-indicator" id="ucb-indicator"></div>
+                                </label>
+                                <label class="radio-option" id="pi-option" title="Probability of Improvement: Conservative, focuses on areas likely to improve. Good when you're close to optimal.">
+                                    <input type="radio" name="acquisition" value="PI">
+                                    <span>PI (Probability of Improvement)</span>
+                                    <div class="recommendation-indicator" id="pi-indicator"></div>
+                                </label>
+                            </div>
+                        </div>
                         <div id="suggestion-display">
                             <p>Brew some coffee first to get recommendations!</p>
                         </div>
@@ -138,7 +168,6 @@
                             <p>Brew coffee to see uncertainty bands</p>
                         </div>
                         <div class="uncertainty-explanation">
-                            <p><strong>Understanding the bands:</strong></p>
                             <p>🔵 <strong>Blue bands:</strong> Areas where we're confident about coffee quality</p>
                             <p>🔴 <strong>Red line:</strong> Current settings | 🟢 <strong>Green line:</strong> Suggested settings</p>
                             <p>💡 <strong>Strategy:</strong> Explore outside blue bands to discover new areas!</p>
@@ -228,5 +257,8 @@
     </div>
 
     <script src="script.js"></script>
+    <script src="coffee-demo.js"></script>
+    <script src="custom-problem.js"></script>
+    <script src="bayesian-education.js"></script>
 </body>
 </html>
