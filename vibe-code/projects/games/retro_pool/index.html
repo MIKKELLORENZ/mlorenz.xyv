@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro Pool - PS1 Style</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="screen active">
+        <div class="loading-content">
+            <div class="ps1-logo">RETRO POOL</div>
+            <div class="loading-bar">
+                <div class="loading-progress"></div>
+            </div>
+            <div class="loading-text">Loading...</div>
+        </div>
+    </div>
+
+    <!-- Main Menu -->
+    <div id="mainMenu" class="screen">
+        <div class="menu-content">
+            <h1 class="game-title">RETRO POOL</h1>
+            <div class="menu-buttons">
+                <button id="playButton" class="ps1-button">PLAY</button>
+                <button id="optionsButton" class="ps1-button">OPTIONS</button>
+                <button id="exitButton" class="ps1-button">EXIT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen" class="screen">
+        <canvas id="gameCanvas"></canvas>
+        
+        <!-- Game UI -->
+        <div id="gameUI">
+            <div class="ui-top">
+                <div class="player-info">
+                    <div class="player-name">PLAYER 1</div>
+                    <div class="player-score">Score: <span id="player1Score">0</span></div>
+                </div>
+                <div class="game-info">
+                    <div class="shot-power">Power: <span id="shotPower">0</span>%</div>
+                    <div class="current-player">Current: <span id="currentPlayer">Player 1</span></div>
+                </div>
+            </div>
+            
+            <div class="ui-bottom">
+                <div class="controls-hint">
+                    S to aim • A/D or ← → to adjust angle • Hold SPACE to charge shot • R to reset camera • ESC to pause
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pause Menu -->
+    <div id="pauseMenu" class="screen overlay">
+        <div class="menu-content">
+            <h2>PAUSED</h2>
+            <div class="menu-buttons">
+                <button id="resumeButton" class="ps1-button">RESUME</button>
+                <button id="restartButton" class="ps1-button">RESTART</button>
+                <button id="menuButton" class="ps1-button">MAIN MENU</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
