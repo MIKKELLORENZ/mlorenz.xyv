@@ -74,6 +74,19 @@ document.addEventListener('DOMContentLoaded', function() {
             type: "iframe"
         },
 
+        {
+            id: "bayesian_optimization",
+            title: "Bayesian Optimization (Interactive)",
+            description: "Don't know Bayesian Optimization? Learn it by brewing coffee!",
+            thumbnail: "../vibe-code/projects/simulations/bayesian_optimization/thumbnail.jpg",
+            category: "simulations",
+            tags: ["bayesian optimization", "machine learning", "interactive","coffee","optimization"],
+            date: "2025-07-23",
+            path: "projects/simulations/bayesian_optimization/index.html",
+            type: "iframe"
+        },
+
+
 
     ];
 
